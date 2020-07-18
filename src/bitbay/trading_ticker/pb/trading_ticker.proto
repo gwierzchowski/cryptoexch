@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+message TradingTickAll {
+  message TradingTick {
+    uint64 time = 1;
+    float lowestAsk = 2;
+    float previousRate = 3;
+    float rate = 4;
+    float highestBid = 5;
+    uint32 scale1 = 6;
+    string currency1 = 7;
+    float minOffer1 = 8;
+    uint32 scale2 = 9;
+    string currency2 = 10;
+    float minOffer2 = 11;
+  }
+  repeated TradingTick ticks = 1;
+}

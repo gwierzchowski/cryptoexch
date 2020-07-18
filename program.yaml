@@ -1,0 +1,47 @@
+Config:
+  Module: BitBay
+
+Tasks:
+  - Api: trading/stats
+    Format: csv
+    # %$ - will be replace by consequtive counter
+    # other %* marks will go thru chrono::format function, see:
+    # https://docs.rs/chrono/0.4.13/chrono/format/strftime/index.html#specifiers
+    # OutPathMask: samples/stats_ETH_%$.csv
+    OutPathMask: samples/stats_ETH_%$_%s.csv
+    StopAfter: 1
+    Frequency: 3
+    NewFileAfter: 3
+    Filters:
+      - - items
+        - rhai
+        - |
+          if key.contains("ETH") { return true; }
+          if val.h == () || val.l == () { return false; }
+          let h = val.h.to_float();
+          let l = val.l.to_float();
+          if h == 0.0 || l == 0.0 { return false; }
+          (h - l) / h > 0.1
+        # - |
+        #   val["v"].to_float() > 0.0
+        # - |
+        #   val["m"].contains("ETH")
+        # - |
+        #   val["m"] == "AMLT-PLN"
+      # - ["items", "by_key_re", ".*ETH.*"]
+      # - ["items", "by_key", "ETH-PLN"]
+  - Api: trading/ticker
+    Format: csv
+    # Format: pb_proto
+    # Format: pb
+    # Format: json_pretty
+    OutPathMask: samples/ticker_ETH_%s.csv
+    # OutPathMask: samples/ticker.proto
+    # OutPathMask: samples/ticker_ETH_%s.pb3
+    # OutPathMask: samples/ticker_ETH_%c.json
+    StopAfter: 4
+    Frequency: 4
+    NewFileAfter: 2
+    Filters:
+      - ["items", "by_key_re", ".*ETH.*"]
+    

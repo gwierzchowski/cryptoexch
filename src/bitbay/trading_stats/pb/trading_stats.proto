@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message TradingStatsAll {
+  message TradingStat {
+    uint64 timestamp = 1;
+    string market1 = 2;
+    string market2 = 3;
+    float vol = 5;
+    float hi = 7;
+    float lo = 8;
+    float r24h = 9;
+  }
+  repeated TradingStat stats = 1;
+}

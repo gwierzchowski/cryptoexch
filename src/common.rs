@@ -14,7 +14,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct ConfigConfig {
-    Module: String,
+    PID: Option<String>,
 }
 
 pub type ConfigFilters = Vec<(String, String, String)>; // pointer, operation, argument
@@ -25,6 +25,7 @@ pub type ConfigFilters = Vec<(String, String, String)>; // pointer, operation, a
 #[allow(non_snake_case)]
 pub struct ConfigTask {
     pub Api: String,
+    pub Module: String,
     pub Format: String,
     pub OutPathMask: String,
     pub NewFileAfter: Option<usize>,
@@ -172,11 +173,17 @@ pub fn resolve_filename(template: &str, counter: usize) -> String {
 }
 
 pub async fn handle_task(task: ConfigTask) {
-    let handler = super::bitbay::TaskRunner::new().start();
-    let task_name = task.Api.clone();
-    match handler.send(task).await {
-        Err(e) => eprintln!("Task '{}': Dispatch error: {}", task_name, e),
-        Ok(Err(e)) => eprintln!("Task '{}': Run error: {}", task_name, e),
-        _ => {}
+    let task_mod = task.Module.clone();
+    let task_api = task.Api.clone();
+    match task_mod.as_ref() {
+        "BitBay" => {
+            let handler = super::bitbay::TaskRunner::new().start();
+            match handler.send(task).await {
+                Err(e) => eprintln!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
+                Ok(Err(e)) => eprintln!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
+                _ => {}
+            }
+        },
+        _ => eprintln!("Unsupported Module value: {}", task_mod)
     }
 }

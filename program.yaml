@@ -1,8 +1,9 @@
 Config:
-  Module: BitBay
+  PID: /tmp/cryptoexch.pid
 
 Tasks:
   - Api: trading/stats
+    Module: BitBay
     Format: csv
     # %$ - will be replace by consequtive counter
     # other %* marks will go thru chrono::format function, see:
@@ -31,6 +32,7 @@ Tasks:
       # - ["items", "by_key_re", ".*ETH.*"]
       # - ["items", "by_key", "ETH-PLN"]
   - Api: trading/ticker
+    Module: BitBay
     Format: csv
     # Format: pb_proto
     # Format: pb

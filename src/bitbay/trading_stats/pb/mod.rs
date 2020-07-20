@@ -1,10 +1,10 @@
 use std::any::Any;
 use std::convert::{TryFrom, TryInto};
-use std::fs::File;
-use std::io::prelude::*;
 use std::time::SystemTime;
 
 use anyhow::{Result, Error};
+
+use async_trait::async_trait;
 
 use protobuf::{CodedOutputStream, Message};
 
@@ -47,6 +47,7 @@ impl TryFrom<&super::StatIn> for StatOut {
     }
 }
 
+#[async_trait]
 impl super::super::OutputData for StatsAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::StatsAllIn>() {
@@ -59,9 +60,20 @@ impl super::super::OutputData for StatsAllOut {
         }
     }
 
-    fn save(&mut self, path: &str) -> Result<()> {
-        let mut file = File::create(path)?;
-        let mut writer = CodedOutputStream::new(&mut file);
+    // fn save(&mut self, path: &str) -> Result<()> {
+    //     use std::io::prelude::*;
+    //     let mut file = std::fs::File::create(path)?;
+    //     let mut writer = CodedOutputStream::new(&mut file);
+    //     self.write_to(&mut writer)?;
+    //     writer.flush()?;
+    //     self.mut_stats().clear();
+    //     Ok(())
+    // }
+
+    async fn save(&mut self, path: &str) -> Result<()> {
+        let file = tokio::fs::File::create(path).await?;
+        let mut file = file.into_std().await;
+        let mut writer = CodedOutputStream::new(&mut file); // TODO: Check if this can be done in async way
         self.write_to(&mut writer)?;
         writer.flush()?;
         self.mut_stats().clear();
@@ -71,14 +83,22 @@ impl super::super::OutputData for StatsAllOut {
 
 pub struct ProtoOut;
 
+#[async_trait]
 impl super::super::OutputData for ProtoOut {
     fn add_data(&mut self, _data: Box<dyn Any>) -> Result<()> {
         Ok(())
     }
 
-    fn save(&mut self, path: &str) -> Result<()> {
-        let mut file = File::create(path)?;
-        file.write_all(include_bytes!("trading_stats.proto"))?;
+    // fn save(&mut self, path: &str) -> Result<()> {
+    //     let mut file = File::create(path)?;
+    //     file.write_all(include_bytes!("trading_stats.proto"))?;
+    //     Ok(())
+    // }
+
+    async fn save(&mut self, path: &str) -> Result<()> {
+        use tokio::io::AsyncWriteExt;
+        let mut file = tokio::fs::File::create(path).await?;
+        file.write_all(include_bytes!("trading_stats.proto")).await?;
         Ok(())
     }
 }

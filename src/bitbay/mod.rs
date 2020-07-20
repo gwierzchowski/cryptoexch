@@ -3,6 +3,8 @@ use std::str::FromStr;
 
 use actix::prelude::*;
 
+use async_trait::async_trait;
+
 use anyhow::Result;
 
 use lazy_static;
@@ -86,7 +88,7 @@ impl Handler<ConfigTask> for TaskRunner {
                     if this_cnt >= new_after { 
                         if let Some(ref mut data_out) = data_out {
                             let filename = resolve_filename(&task.OutPathMask, file_cnt);
-                            data_out.save(&filename)?;
+                            data_out.save(&filename).await?;
                         }
                         this_cnt = 1usize;
                         file_cnt = file_cnt.wrapping_add(1);
@@ -100,18 +102,20 @@ impl Handler<ConfigTask> for TaskRunner {
                 }
             }
             let filename = resolve_filename(&task.OutPathMask, file_cnt);
-            data_out.unwrap().save(&filename)?;
+            data_out.unwrap().save(&filename).await?;
             Ok(())
         })
     }
 }
 
+#[async_trait]
 pub trait OutputData {
     /// Adds new data to already collected ones
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()>;
     
     /// Save collected data to file and clears collected data buffer
-    fn save(&mut self, path: &str) -> Result<()>;
+    // fn save(&mut self, path: &str) -> Result<()>;
+    async fn save(&mut self, path: &str) -> Result<()>;
 }
 
 // Following handle would be more elegant, but it can not be compiled (rustc 1.43):

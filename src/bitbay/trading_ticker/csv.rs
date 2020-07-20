@@ -3,6 +3,8 @@ use std::convert::{TryFrom, TryInto};
 
 use anyhow::{Result, Error};
 
+use async_trait::async_trait;
+
 use super::TickOut;
 
 pub struct TickAllOut {
@@ -27,6 +29,7 @@ impl TryFrom<&super::TickAllIn> for TickAllOut {
     }
 }
 
+#[async_trait]
 impl super::super::OutputData for TickAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::TickAllIn>() {
@@ -39,10 +42,20 @@ impl super::super::OutputData for TickAllOut {
         }
     }
 
-    fn save(&mut self, path: &str) -> Result<()> {
-        // let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?; // TODO: Change to non blocking
-        // let mut wri = csv::Writer::from_writer(file); 
-        let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
+    // fn save(&mut self, path: &str) -> Result<()> {
+    //     // let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?; // TODO: Change to non blocking
+    //     // let mut wri = csv::Writer::from_writer(file); 
+    //     let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
+    //     for rec in &self.ticks {
+    //         wri.serialize(rec)?;
+    //     }
+    //     self.ticks.clear();
+    //     Ok(())
+    // }
+    async fn save(&mut self, path: &str) -> Result<()> {
+        let file = tokio::fs::File::create(path).await?;
+        let file = file.into_std().await; // csv does not currently support async write (TODO: Maybe contribute)
+        let mut wri = csv::Writer::from_writer(file); 
         for rec in &self.ticks {
             wri.serialize(rec)?;
         }

@@ -1,9 +1,11 @@
 use std::any::Any;
-use std::fs::File;
-use std::io::prelude::*;
+// use std::fs::File;
+// use std::io::prelude::*;
 use std::convert::{TryFrom, TryInto};
 
 use anyhow::{Result, Error};
+
+use async_trait::async_trait;
 
 use serde::Serialize;
 
@@ -34,6 +36,7 @@ impl TryFrom<&super::StatsAllIn> for StatsAllOut {
     }
 }
 
+#[async_trait]
 impl super::super::OutputData for StatsAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::StatsAllIn>() {
@@ -46,10 +49,18 @@ impl super::super::OutputData for StatsAllOut {
         }
     }
 
-    fn save(&mut self, path: &str) -> Result<()> {
-        let mut file = File::create(path)?;
+    // fn save(&mut self, path: &str) -> Result<()> {
+    //     let mut file = File::create(path)?;
+    //     let js = if self.print_pretty { serde_json::to_string_pretty(self)? } else { serde_json::to_string(self)? };
+    //     file.write_all(js.as_bytes())?;
+    //     self.stats.clear();
+    //     Ok(())
+    // }
+    async fn save(&mut self, path: &str) -> Result<()> {
+        use tokio::io::AsyncWriteExt;
+        let mut file = tokio::fs::File::create(path).await?;
         let js = if self.print_pretty { serde_json::to_string_pretty(self)? } else { serde_json::to_string(self)? };
-        file.write_all(js.as_bytes())?;
+        file.write_all(js.as_bytes()).await?;
         self.stats.clear();
         Ok(())
     }

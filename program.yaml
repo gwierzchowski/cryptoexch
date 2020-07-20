@@ -10,7 +10,7 @@ Tasks:
     # https://docs.rs/chrono/0.4.13/chrono/format/strftime/index.html#specifiers
     # OutPathMask: samples/stats_ETH_%$.csv
     OutPathMask: samples/stats_ETH_%$_%s.csv
-    StopAfter: 1
+    StopAfter: 2
     Frequency: 3
     NewFileAfter: 3
     Filters:

@@ -3,6 +3,8 @@ use std::convert::{TryFrom, TryInto};
 
 use anyhow::{Result, Error};
 
+use async_trait::async_trait;
+
 use super::StatOut;
 
 pub struct StatsAllOut {
@@ -27,6 +29,7 @@ impl TryFrom<&super::StatsAllIn> for StatsAllOut {
     }
 }
 
+#[async_trait]
 impl super::super::OutputData for StatsAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::StatsAllIn>() {
@@ -39,10 +42,23 @@ impl super::super::OutputData for StatsAllOut {
         }
     }
 
-    fn save(&mut self, path: &str) -> Result<()> {
+    // fn save(&mut self, path: &str) -> Result<()> {
+    //     // let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?; // TODO: Change to non blocking
+    //     // let mut wri = csv::Writer::from_writer(file); 
+    //     let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
+    //     for rec in &self.stats {
+    //         wri.serialize(rec)?;
+    //     }
+    //     self.stats.clear();
+    //     Ok(())
+    // }
+
+    async fn save(&mut self, path: &str) -> Result<()> {
         // let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?; // TODO: Change to non blocking
-        // let mut wri = csv::Writer::from_writer(file); 
-        let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
+        let file = tokio::fs::File::create(path).await?;
+        let file = file.into_std().await; // csv does not currently support async write (TODO: Maybe contribute)
+        let mut wri = csv::Writer::from_writer(file); 
+        // let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
         for rec in &self.stats {
             wri.serialize(rec)?;
         }

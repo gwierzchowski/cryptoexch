@@ -6,7 +6,7 @@ use anyhow::{Result, Error};
 
 use serde::{Deserialize, Serialize};
 
-use crate::common::{FilterFun, process_json_with_filters, process_json};
+use crate::common::{OutputData, FilterFun, process_json_with_filters, process_json};
 
 pub mod csv;
 pub mod json;
@@ -49,7 +49,7 @@ pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<
 //////////////////////////////////////////////////////////
 /// Output - common
 
-pub fn output_data_for(format: &str) -> Option<Box<dyn super::OutputData>> {
+pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
     match format {
         "csv" => Some(Box::new(csv::StatsAllOut::new())),
         "json" | "json_pretty" => {

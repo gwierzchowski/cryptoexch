@@ -37,7 +37,7 @@ impl TryFrom<&super::StatsAllIn> for StatsAllOut {
 }
 
 #[async_trait]
-impl super::super::OutputData for StatsAllOut {
+impl crate::common::OutputData for StatsAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::StatsAllIn>() {
             for ref d in *data {

@@ -31,16 +31,25 @@ Tasks:
         #   val["m"] == "AMLT-PLN"
       # - ["items", "by_key_re", ".*ETH.*"]
       # - ["items", "by_key", "ETH-PLN"]
-  - Api: trading/ticker
-    Module: BitBay
-    Format: csv
-    # Format: pb_proto
-    # Format: pb
-    # Format: json_pretty
-    OutPathMask: samples/ticker_ETH_%s.csv
-    # OutPathMask: samples/ticker.proto
-    # OutPathMask: samples/ticker_ETH_%s.pb3
-    # OutPathMask: samples/ticker_ETH_%c.json
+  # - Api: trading/ticker
+  #   Module: BitBay
+  #   Format: csv
+  #   # Format: pb_proto
+  #   # Format: pb
+  #   # Format: json_pretty
+  #   OutPathMask: samples/ticker_ETH_%s.csv
+  #   # OutPathMask: samples/ticker.proto
+  #   # OutPathMask: samples/ticker_ETH_%s.pb3
+  #   # OutPathMask: samples/ticker_ETH_%c.json
+  #   StopAfter: 4
+  #   Frequency: 4
+  #   NewFileAfter: 2
+  #   Filters:
+  #     - ["items", "by_key_re", ".*ETH.*"]
+  - Api: https://api.bitbay.net/rest/trading/ticker
+    Module: GenericJson
+    Format: json_pretty
+    OutPathMask: samples/ticker_ETH_%s.json
     StopAfter: 4
     Frequency: 4
     NewFileAfter: 2

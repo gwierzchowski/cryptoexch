@@ -8,6 +8,7 @@ use actix::prelude::*;
 use anyhow::Result;
 
 mod common;
+mod generic_json;
 mod bitbay;
 
 #[actix_rt::main]

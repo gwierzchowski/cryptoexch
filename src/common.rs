@@ -1,8 +1,14 @@
+use std::any::Any;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use actix::prelude::*;
 
 use anyhow::Result;
+
+use async_trait::async_trait;
+
+use lazy_static;
 
 use regex::Regex;
 
@@ -26,6 +32,7 @@ pub type ConfigFilters = Vec<(String, String, String)>; // pointer, operation, a
 pub struct ConfigTask {
     pub Api: String,
     pub Module: String,
+    pub Url: Option<String>,
     pub Format: String,
     pub OutPathMask: String,
     pub NewFileAfter: Option<usize>,
@@ -42,10 +49,44 @@ pub struct Config {
     pub Tasks: Vec<ConfigTask>,
 }
 
+//////////////////////////////////////////////////////////
+/// Script Engine
+
+fn to_float(s: rhai::ImmutableString) -> rhai::FLOAT {
+    rhai::FLOAT::from_str(s.as_str()).unwrap_or_default()
+}
+
+fn to_int(s: rhai::ImmutableString) -> rhai::INT {
+    rhai::INT::from_str(s.as_str()).unwrap_or_default()
+}
+
+lazy_static! {
+    static ref SCRIPT_ENGINE: rhai::Engine = {
+        use rhai::{Engine, RegisterFn};
+        let mut engine = Engine::new();
+        engine.register_fn("to_float", to_float);
+        engine.register_fn("to_int", to_int);
+        engine
+    };
+}
+
+//////////////////////////////////////////////////////////
+/// Output Data Trait
+
+#[async_trait]
+pub trait OutputData {
+    /// Adds new data to already collected ones
+    fn add_data(&mut self, data: Box<dyn Any>) -> Result<()>;
+    
+    /// Save collected data to file and clears collected data buffer
+    async fn save(&mut self, path: &str) -> Result<()>;
+}
+
+//////////////////////////////////////////////////////////
+/// Process Json
 
 pub fn process_json(json_val: serde_json::Value) -> serde_json::Value {
     use serde_json::Value;
-    use std::str::FromStr;
     match json_val {
         Value::Null => Value::Null,
         Value::Bool(b) => Value::Bool(b),
@@ -78,7 +119,6 @@ pub type FilterFun = Box<dyn Fn(&str, &serde_json::Value) -> bool>;
 
 pub fn process_json_with_filters(key:&str, json_val: serde_json::Value, filters:&HashMap<String, FilterFun>) -> serde_json::Value {
     use serde_json::Value;
-    use std::str::FromStr;
     match json_val {
         Value::Null => Value::Null,
         Value::Bool(b) => Value::Bool(b),
@@ -115,7 +155,8 @@ pub fn process_json_with_filters(key:&str, json_val: serde_json::Value, filters:
     }
 }
 
-pub fn create_filters(filters: &Option<ConfigFilters>, engine: &'static rhai::Engine) -> Result<HashMap<String, FilterFun>> {
+pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String, FilterFun>> {
+    let engine = &*SCRIPT_ENGINE;
     let mut ret_filters = HashMap::new();
     if let Some(cfg_filters) = filters {
         for flt in cfg_filters {
@@ -158,6 +199,9 @@ pub fn create_filters(filters: &Option<ConfigFilters>, engine: &'static rhai::En
     Ok(ret_filters)
 }
 
+//////////////////////////////////////////////////////////
+/// Other Helpers
+
 pub fn resolve_filename(template: &str, counter: usize) -> String {
     use chrono::prelude::*;
     if template.contains('%') {
@@ -176,6 +220,14 @@ pub async fn handle_task(task: ConfigTask) {
     let task_mod = task.Module.clone();
     let task_api = task.Api.clone();
     match task_mod.as_ref() {
+        "GenericJson" => {
+            let handler = super::generic_json::TaskRunner::new().start();
+            match handler.send(task).await {
+                Err(e) => eprintln!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
+                Ok(Err(e)) => eprintln!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
+                _ => {}
+            }
+        },
         "BitBay" => {
             let handler = super::bitbay::TaskRunner::new().start();
             match handler.send(task).await {

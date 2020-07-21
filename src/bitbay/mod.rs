@@ -1,13 +1,8 @@
 use std::any::Any;
-use std::str::FromStr;
 
 use actix::prelude::*;
 
-use async_trait::async_trait;
-
 use anyhow::Result;
-
-use lazy_static;
 
 use super::common::{ConfigTask, create_filters, resolve_filename};
 
@@ -19,26 +14,7 @@ mod trading_stats;
 
 const URL:&str = "https://api.bitbay.net/rest/";
 
-fn to_float(s: rhai::ImmutableString) -> rhai::FLOAT {
-    rhai::FLOAT::from_str(s.as_str()).unwrap_or_default()
-}
-
-fn to_int(s: rhai::ImmutableString) -> rhai::INT {
-    rhai::INT::from_str(s.as_str()).unwrap_or_default()
-}
-
-lazy_static! {
-    static ref SCRIPT_ENGINE: rhai::Engine = {
-        use rhai::{Engine, RegisterFn};
-        let mut engine = Engine::new();
-        engine.register_fn("to_float", to_float);
-        engine.register_fn("to_int", to_int);
-        engine
-    };
-}
-
-pub struct TaskRunner {
-}
+pub struct TaskRunner;
 
 impl TaskRunner {
     pub fn new() -> Self { TaskRunner{} }
@@ -53,8 +29,15 @@ impl Handler<ConfigTask> for TaskRunner {
     
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
         Box::pin(async move {
-            let url = URL.to_owned() + &task.Api;
-            let filters = create_filters(&task.Filters, &*SCRIPT_ENGINE)?;
+            let mut url = match task.Url {
+                Some(url) => url,
+                None => URL.to_owned(),
+            };
+            if !url.is_empty() && !url.ends_with('/') {
+                url.push_str("/");
+            }
+            url.push_str(&task.Api);
+            let filters = create_filters(&task.Filters)?;
             let mut run_cnt = 1usize;
             let mut this_cnt = 1usize;
             let mut file_cnt = 1usize;
@@ -106,16 +89,6 @@ impl Handler<ConfigTask> for TaskRunner {
             Ok(())
         })
     }
-}
-
-#[async_trait]
-pub trait OutputData {
-    /// Adds new data to already collected ones
-    fn add_data(&mut self, data: Box<dyn Any>) -> Result<()>;
-    
-    /// Save collected data to file and clears collected data buffer
-    // fn save(&mut self, path: &str) -> Result<()>;
-    async fn save(&mut self, path: &str) -> Result<()>;
 }
 
 // Following handle would be more elegant, but it can not be compiled (rustc 1.43):

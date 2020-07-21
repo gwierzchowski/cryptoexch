@@ -35,7 +35,7 @@ impl TryFrom<&super::TickAllIn> for TickAllOut {
 }
 
 #[async_trait]
-impl super::super::OutputData for TickAllOut {
+impl crate::common::OutputData for TickAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::TickAllIn>() {
             for ref d in *data {

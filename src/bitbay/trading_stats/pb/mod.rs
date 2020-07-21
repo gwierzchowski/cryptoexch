@@ -48,7 +48,7 @@ impl TryFrom<&super::StatIn> for StatOut {
 }
 
 #[async_trait]
-impl super::super::OutputData for StatsAllOut {
+impl crate::common::OutputData for StatsAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::StatsAllIn>() {
             for ref d in *data {
@@ -84,7 +84,7 @@ impl super::super::OutputData for StatsAllOut {
 pub struct ProtoOut;
 
 #[async_trait]
-impl super::super::OutputData for ProtoOut {
+impl crate::common::OutputData for ProtoOut {
     fn add_data(&mut self, _data: Box<dyn Any>) -> Result<()> {
         Ok(())
     }

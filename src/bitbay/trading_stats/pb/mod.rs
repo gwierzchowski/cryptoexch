@@ -1,3 +1,6 @@
+/*!
+ * Implementation of Protocol Buffers output format of trading/stats" API from "BitBay" module.
+ */
 use std::any::Any;
 use std::convert::{TryFrom, TryInto};
 use std::time::SystemTime;
@@ -11,6 +14,8 @@ use protobuf::{CodedOutputStream, Message};
 mod trading_stats;
 
 type StatOut         = trading_stats::TradingStatsAll_TradingStat;
+
+/// Output object implementation.
 pub type StatsAllOut = trading_stats::TradingStatsAll;
 
 impl TryFrom<&super::StatsAllIn> for StatsAllOut {

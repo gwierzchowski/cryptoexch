@@ -1,3 +1,6 @@
+/*!
+ * Implementation of Protocol Buffers output format of trading/ticker" API from "BitBay" module.
+ */
 use std::any::Any;
 use std::convert::{TryFrom, TryInto};
 
@@ -10,6 +13,8 @@ use protobuf::{CodedOutputStream, Message};
 mod trading_ticker;
 
 type TickOut        = trading_ticker::TradingTickAll_TradingTick;
+
+/// Output object implementation.
 pub type TickAllOut = trading_ticker::TradingTickAll;
 
 impl TryFrom<&super::TickAllIn> for TickAllOut {

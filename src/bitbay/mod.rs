@@ -1,3 +1,9 @@
+/*!
+ * Implementation of "BitBay" module.
+ * 
+ * This module is able to download data in JSON format from [BitBay](https://bitbay.net) service and save in file.
+ * List of supported APIs is as described in sub-modules list.
+ */
 use std::any::Any;
 
 use actix::prelude::*;
@@ -9,11 +15,12 @@ use super::common::{ConfigTask, create_filters, resolve_filename};
 mod trading_ticker;
 mod trading_stats;
 
-//////////////////////////////////////////////////////////
-/// Task runner
+/////////////////////////////////////////////////////////
+// Task runner
 
 const URL:&str = "https://api.bitbay.net/rest/";
 
+/// Empty struct that implements actix Actor and Handler traits.
 pub struct TaskRunner;
 
 impl TaskRunner {
@@ -25,8 +32,9 @@ impl Actor for TaskRunner {
 }
 
 impl Handler<ConfigTask> for TaskRunner {
-   type Result = ResponseFuture<Result<()>>;
+    type Result = ResponseFuture<Result<()>>;
     
+    /// Based on passed task configuration this function gets data and saves them in the file.
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
         Box::pin(async move {
             let mut url = match task.Url {
@@ -90,6 +98,9 @@ impl Handler<ConfigTask> for TaskRunner {
         })
     }
 }
+
+
+
 
 // Following handle would be more elegant, but it can not be compiled (rustc 1.43):
 // 80 |                 let data = get_data().await?;

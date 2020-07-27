@@ -1,3 +1,6 @@
+/*!
+ * Implementation of JSON output format of trading/ticker" API from "BitBay" module.
+ */
 use std::any::Any;
 use std::convert::{TryFrom, TryInto};
 
@@ -9,6 +12,7 @@ use serde::Serialize;
 
 use super::TickOut;
 
+/// Output object implementation.
 #[derive(Serialize, Debug)]
 pub struct TickAllOut {
     ticks: Vec<TickOut>,

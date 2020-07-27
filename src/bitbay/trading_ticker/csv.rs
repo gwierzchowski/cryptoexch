@@ -1,3 +1,6 @@
+/*!
+ * Implementation of CSV output format of trading/ticker" API from "BitBay" module.
+ */
 use std::any::Any;
 use std::convert::{TryFrom, TryInto};
 
@@ -7,6 +10,7 @@ use async_trait::async_trait;
 
 use super::TickOut;
 
+/// Output object implementation.
 pub struct TickAllOut {
     ticks: Vec<TickOut>,
 }

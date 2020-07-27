@@ -1,3 +1,6 @@
+/*!
+ * Implementation of CSV output format of trading/stats" API from "BitBay" module.
+ */
 use std::any::Any;
 use std::convert::{TryFrom, TryInto};
 
@@ -7,6 +10,7 @@ use async_trait::async_trait;
 
 use super::StatOut;
 
+/// Output object implementation.
 pub struct StatsAllOut {
     stats: Vec<StatOut>,
 }

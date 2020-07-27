@@ -1,3 +1,6 @@
+/*!
+ * Implementation of JSON output format of trading/stats" API from "BitBay" module.
+ */
 use std::any::Any;
 // use std::fs::File;
 // use std::io::prelude::*;
@@ -11,6 +14,7 @@ use serde::Serialize;
 
 use super::StatOut;
 
+/// Output object implementation.
 #[derive(Serialize, Debug)]
 pub struct StatsAllOut {
     stats: Vec<StatOut>,

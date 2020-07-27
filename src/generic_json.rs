@@ -1,3 +1,9 @@
+/*!
+ * Implementation of "GenericJson" module.
+ * 
+ * This module is able to download data in JSON format and save as JSON file.
+ * Downloaded data can be accumulated and saved as array of JSON values.
+ */
 use std::any::Any;
 use std::collections::HashMap;
 
@@ -15,9 +21,10 @@ use crate::common::{
     OutputData
 };
 
-//////////////////////////////////////////////////////////
-/// Task runner
+/////////////////////////////////////////////////////////
+// Task runner
 
+/// Empty struct that implements actix Actor and Handler traits.
 pub struct TaskRunner;
 
 impl TaskRunner {
@@ -29,8 +36,9 @@ impl Actor for TaskRunner {
 }
 
 impl Handler<ConfigTask> for TaskRunner {
-   type Result = ResponseFuture<Result<()>>;
+    type Result = ResponseFuture<Result<()>>;
     
+    /// Based on passed task configuration this function gets data and saves them in the file.
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
         Box::pin(async move {
             let mut url = match task.Url {
@@ -84,11 +92,14 @@ impl Handler<ConfigTask> for TaskRunner {
     }
 }
 
-//////////////////////////////////////////////////////////
-/// Input
+/////////////////////////////////////////////////////////
+// Input
 
+/// Input data for this module - it is JSON::Value object.
 type InputChunk = Value;
 
+/// Function which downloads and returns chunk of input data.
+/// 
 pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<InputChunk> {
     let resp = reqwest::get(url).await?;
     if resp.status().is_success() {
@@ -104,9 +115,15 @@ pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<
     }
 }
 
-//////////////////////////////////////////////////////////
-/// Output
+/////////////////////////////////////////////////////////
+// Output
 
+/// Output object factory.
+/// 
+/// Function returns output object appropriate for given format or `None` if format is not supported.
+/// Currently supported formats:
+/// - `json` (formatted in compact way - for computers)
+/// - `json_pretty` (formatted in readable way - for humans)
 pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
     match format {
         "json" | "json_pretty" => {
@@ -118,6 +135,7 @@ pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
     }
 }
 
+/// Output object implementation.
 pub struct OutputDataImpl {
     data: Value,
     print_pretty: bool,

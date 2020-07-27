@@ -1,3 +1,8 @@
+/*!
+ * Implementation of "trading/ticker" API from "BitBay" module.
+ * 
+ * This module is able to download data in JSON format from _https://api.bitbay.net/rest/trading/ticker_ and save in file.
+ */
 use std::collections::HashMap;
 use std::convert::TryFrom;
 
@@ -7,12 +12,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::{OutputData, FilterFun, process_json_with_filters, process_json};
 
-pub mod csv;
+
 pub mod json;
+
+#[cfg(feature = "csv_out")]
+pub mod csv;
+
+#[cfg(feature = "pb_out")]
 pub mod pb;
 
-//////////////////////////////////////////////////////////
-/// Input
+/////////////////////////////////////////////////////////
+// Input
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
 pub struct TickInCurrency {
@@ -28,6 +39,7 @@ pub struct TickInMarket {
     second: TickInCurrency,
 }
 
+/// Record of input data for this module.
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
 pub struct TickIn {
@@ -38,8 +50,12 @@ pub struct TickIn {
     time: u64,
     market: TickInMarket,
 }
+
+/// Input data for this module.
 pub type TickAllIn = Vec<TickIn>;
 
+/// Function which downloads and returns chunk of input data.
+/// 
 pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<TickAllIn> {
     let resp = reqwest::get(url).await?;
     if resp.status().is_success() {
@@ -61,23 +77,37 @@ pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<
     }
 }
 
-//////////////////////////////////////////////////////////
-/// Output - common
+/////////////////////////////////////////////////////////
+// Output - common
 
+/// Output object factory.
+/// 
+/// Function returns output object appropriate for given format or `None` if format is not supported.
+/// Currently supported formats:
+/// - `json` (formatted in compact way - for computers)
+/// - `json_pretty` (formatted in readable way - for humans)
+/// - `csv` (with `,` as separator)
+/// - `pb` - Google Protocol Buffers format
+/// - `pb_proto` - saves definition file (.proto) for `pb` format
 pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
     match format {
-        "csv" => Some(Box::new(csv::TickAllOut::new())),
         "json" | "json_pretty" => {
             let mut json = json::TickAllOut::new();
             json.print_pretty = format == "json_pretty";
             Some(Box::new(json))
         },
+        #[cfg(feature = "csv_out")]
+        "csv" => Some(Box::new(csv::TickAllOut::new())),
+        #[cfg(feature = "pb_out")]
         "pb" => Some(Box::new(pb::TickAllOut::new())),
+        #[cfg(feature = "pb_out")]
         "pb_proto" => Some(Box::new(pb::ProtoOut)),
         _ => None
     }
 }
 
+/// Record of output object.
+/// Output object depends on output format and is defined in respective sub-module.
 #[allow(non_snake_case)]
 #[derive(Serialize, Debug)]
 struct TickOut {

@@ -1,5 +1,5 @@
 Config:
-  PID: /tmp/cryptoexch.pid
+  PIDFile: /tmp/cryptoexch.pid
 
 Tasks:
   - Api: trading/stats

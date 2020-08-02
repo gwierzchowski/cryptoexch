@@ -20,7 +20,7 @@ The program currently does not accept any command line parameters.
 */
 
 #[macro_use] extern crate anyhow;
-#[macro_use] extern crate lazy_static;
+// #[macro_use] extern crate lazy_static;
 
 use std::fs::File;
 
@@ -31,7 +31,7 @@ use anyhow::Result;
 mod common;
 mod generic_json;
 
-#[cfg(feature = "bitbay")]
+#[cfg(feature = "mod_bitbay")]
 mod bitbay;
 
 #[actix_rt::main]

@@ -14,6 +14,7 @@ use super::common::{ConfigTask, create_filters, resolve_filename};
 
 mod trading_ticker;
 mod trading_stats;
+mod trading_orderbook;
 
 /////////////////////////////////////////////////////////
 // Task runner
@@ -51,6 +52,12 @@ impl Handler<ConfigTask> for TaskRunner {
             let mut file_cnt = 1usize;
             let mut data:Box<dyn Any>;
             let mut data_out = None;
+            if let Some(path_params) = task.PathParams.as_ref() {
+                if !path_params.starts_with('/') {
+                    url.push_str("/");
+                }
+                url.push_str(path_params);
+            }
             loop {
                 match task.Api.as_ref() {
                     "trading/ticker" => {
@@ -63,6 +70,12 @@ impl Handler<ConfigTask> for TaskRunner {
                         data = Box::new(trading_stats::get_data(&url, &filters).await?);
                         if data_out.is_none() {
                             data_out = trading_stats::output_data_for(&task.Format);
+                        }
+                    },
+                    "trading/orderbook" | "trading/orderbook-limited" => {
+                        data = Box::new(trading_orderbook::get_data(&url, &filters).await?);
+                        if data_out.is_none() {
+                            data_out = trading_orderbook::output_data_for(&task.Format);
                         }
                     },
                     _ => bail!("Not supported Tasks:Api: {}", task.Api)
@@ -85,6 +98,11 @@ impl Handler<ConfigTask> for TaskRunner {
                         file_cnt = file_cnt.wrapping_add(1);
                     } else {
                         this_cnt = this_cnt.wrapping_add(1);
+                    }
+                }
+                if let Some(file_cnt_max) = task.CounterMax {
+                    if file_cnt > file_cnt_max {
+                        file_cnt = 1;
                     }
                 }
                 if let Some(frequency) = task.Frequency {

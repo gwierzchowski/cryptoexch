@@ -16,10 +16,10 @@ use crate::common::{OutputData, FilterFun, process_json_with_filters, process_js
 
 pub mod json;
 
-#[cfg(feature = "csv_out")]
+#[cfg(feature = "out_csv")]
 pub mod csv;
 
-#[cfg(feature = "pb_out")]
+#[cfg(feature = "out_pb")]
 pub mod pb;
 
 /////////////////////////////////////////////////////////
@@ -44,16 +44,21 @@ pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<
     let resp = reqwest::get(url).await?;
     if resp.status().is_success() {
         let json:serde_json::Value = resp.json().await?;
-        let json = if filters.is_empty() {
+        let mut json = if filters.is_empty() {
             process_json(json)
         } else {
             process_json_with_filters("/", json, filters)
         };
-        let items = json.get("items").ok_or(anyhow!("No items key in response"))?;
-        let items = items.as_object().ok_or(anyhow!("items key in response is not JSON object"))?;
         let mut stats = Vec::<StatIn>::new();
-        for it in items.values() {
-            stats.push(serde_json::from_value(it.clone())?);
+        if let Some(items) = json.get_mut("items") {
+            let items = items.as_object_mut().ok_or(anyhow!("'items' key in response is not JSON object"))?;
+            for it in items.values_mut() {
+                stats.push(serde_json::from_value(it.take())?);
+            }
+        } else if let Some(item) = json.get_mut("stats") {
+            stats.push(serde_json::from_value(item.take())?);
+        } else {
+            bail!("Unsupported input JSON: no 'items' nor 'stats' keys in response")
         }
         Ok(stats)
     } else {
@@ -80,11 +85,11 @@ pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
             json.print_pretty = format == "json_pretty";
             Some(Box::new(json))
         },
-        #[cfg(feature = "csv_out")]
+        #[cfg(feature = "out_csv")]
         "csv" => Some(Box::new(csv::StatsAllOut::new())),
-        #[cfg(feature = "pb_out")]
+        #[cfg(feature = "out_pb")]
         "pb" => Some(Box::new(pb::StatsAllOut::new())),
-        #[cfg(feature = "pb_out")]
+        #[cfg(feature = "out_pb")]
         "pb_proto" => Some(Box::new(pb::ProtoOut)),
         _ => None
     }

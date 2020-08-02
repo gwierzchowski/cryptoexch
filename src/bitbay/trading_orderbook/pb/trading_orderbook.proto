@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+message OrderBooks {
+  message Order {
+    enum OrderType {
+      BYE = 0;
+      SELL = 1;
+    }
+    uint64 timestamp = 1;
+    OrderType otype = 2;
+    uint32 count = 3;
+    float rate = 4;
+    float curr_amt = 5;
+    float prev_amt = 6;
+    float start_amt = 7;
+  }
+  repeated Order orders = 1;
+}

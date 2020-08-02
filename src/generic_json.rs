@@ -80,6 +80,11 @@ impl Handler<ConfigTask> for TaskRunner {
                         this_cnt = this_cnt.wrapping_add(1);
                     }
                 }
+                if let Some(file_cnt_max) = task.CounterMax {
+                    if file_cnt > file_cnt_max {
+                        file_cnt = 1;
+                    }
+                }
                 if let Some(frequency) = task.Frequency {
                     actix::clock::delay_for(std::time::Duration::from_secs(frequency)).await;
                     // std::thread::sleep(std::time::Duration::from_secs(frequency));

@@ -11,8 +11,6 @@ use anyhow::Result;
 
 use async_trait::async_trait;
 
-use lazy_static;
-
 use regex::Regex;
 
 use serde::Deserialize;
@@ -44,10 +42,11 @@ pub struct ConfigTask {
     pub Api: String,
     pub Module: String,
     pub Url: Option<String>,
+    pub PathParams: Option<String>,
     pub Format: String,
     pub OutPathMask: String,
     pub NewFileAfter: Option<usize>,
-    pub RecycleAfter: Option<usize>,
+    pub CounterMax: Option<usize>,
     pub StopAfter: Option<usize>,
     pub Frequency: Option<u64>,
     pub Filters: Option<ConfigFilters>,
@@ -65,16 +64,22 @@ pub struct Config {
 /////////////////////////////////////////////////////////
 // Script Engine
 
+#[cfg(feature = "filter_rhai")]
+use lazy_static::lazy_static;
+
+#[cfg(feature = "filter_rhai")]
 #[doc(hidden)]
 fn to_float(s: rhai::ImmutableString) -> rhai::FLOAT {
     rhai::FLOAT::from_str(s.as_str()).unwrap_or_default()
 }
 
+#[cfg(feature = "filter_rhai")]
 #[doc(hidden)]
 fn to_int(s: rhai::ImmutableString) -> rhai::INT {
     rhai::INT::from_str(s.as_str()).unwrap_or_default()
 }
 
+#[cfg(feature = "filter_rhai")]
 lazy_static! {
     #[doc(hidden)]
     static ref SCRIPT_ENGINE: rhai::Engine = {
@@ -161,7 +166,13 @@ pub fn process_json_with_filters(key:&str, json_val: serde_json::Value, filters:
         Value::Array(arr) => {
             let mut v = Vec::with_capacity(arr.len());
             for el in arr {
-                v.push(process_json_with_filters(key, el, filters));
+                if let Some(flt) = filters.get(key) {
+                    if flt("", &el) {
+                        v.push(process_json_with_filters("", el, filters));
+                    }
+                } else {
+                    v.push(process_json_with_filters("", el, filters));
+                }
             }
             Value::Array(v)
         }
@@ -187,7 +198,9 @@ pub fn process_json_with_filters(key:&str, json_val: serde_json::Value, filters:
 /// It determines what kind of filters are implemented in application.
 /// 
 pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String, FilterFun>> {
+    #[cfg(feature = "filter_rhai")]
     let engine = &*SCRIPT_ENGINE;
+
     let mut ret_filters = HashMap::new();
     if let Some(cfg_filters) = filters {
         for flt in cfg_filters {
@@ -200,6 +213,7 @@ pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String,
                     let re = Regex::new(&flt.2)?;
                     ret_filters.insert(flt.0.clone(), Box::new(move |k:&str, _v:&serde_json::Value| re.is_match(k)) as FilterFun);
                 },
+                #[cfg(feature = "filter_rhai")]
                 "rhai" => {
                     let script = String::from(&flt.2);
                     ret_filters.insert(flt.0.clone(), Box::new(move |k:&str, v:&serde_json::Value| {
@@ -267,7 +281,7 @@ pub async fn handle_task(task: ConfigTask) {
                 _ => {}
             }
         },
-        #[cfg(feature = "bitbay")]
+        #[cfg(feature = "mod_bitbay")]
         "BitBay" => {
             let handler = super::bitbay::TaskRunner::new().start();
             match handler.send(task).await {

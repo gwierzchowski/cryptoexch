@@ -16,7 +16,7 @@ use anyhow::Result;
 use serde_json::Value;
 
 use crate::common::{
-    ConfigTask, create_filters, resolve_filename,
+    ConfigTask, create_filters, resolve_value,
     FilterFun, process_json_with_filters, process_json,
     OutputData
 };
@@ -40,6 +40,7 @@ impl Handler<ConfigTask> for TaskRunner {
     
     /// Based on passed task configuration this function gets data and saves them in the file.
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
+        use std::borrow::Cow;
         Box::pin(async move {
             let mut url = match task.Url {
                 Some(url) => url,
@@ -55,8 +56,27 @@ impl Handler<ConfigTask> for TaskRunner {
             let mut file_cnt = 1usize;
             let mut data:Box<dyn Any>;
             let mut data_out = None;
+            if let Some(path_params) = task.PathParams.as_ref() {
+                if !path_params.starts_with('/') {
+                    url.push_str("/");
+                }
+                url.push_str(path_params);
+            }
             loop {
-                data = Box::new(get_data(&url, &filters).await?);
+                let mut url_full = Cow::from(&url);
+                if let Some(query_params) = task.QueryParams.as_ref() {
+                    url_full.to_mut().push_str("?");
+                    for (k, v) in query_params.iter() {
+                        if !url_full.ends_with('?') {
+                            url_full.to_mut().push_str("&");
+                        }
+                        url_full.to_mut().push_str(k);
+                        url_full.to_mut().push_str("=");
+                        url_full.to_mut().push_str(&resolve_value(v, run_cnt, file_cnt));
+                    }
+                }
+                
+                data = Box::new(get_data(&url_full, &filters).await?);
                 if data_out.is_none() {
                     data_out = output_data_for(&task.Format);
                 }
@@ -71,7 +91,7 @@ impl Handler<ConfigTask> for TaskRunner {
                 if let Some(new_after) = task.NewFileAfter {
                     if this_cnt >= new_after { 
                         if let Some(ref mut data_out) = data_out {
-                            let filename = resolve_filename(&task.OutPathMask, file_cnt);
+                            let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);
                             data_out.save(&filename).await?;
                         }
                         this_cnt = 1usize;
@@ -90,7 +110,7 @@ impl Handler<ConfigTask> for TaskRunner {
                     // std::thread::sleep(std::time::Duration::from_secs(frequency));
                 }
             }
-            let filename = resolve_filename(&task.OutPathMask, file_cnt);
+            let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);
             data_out.unwrap().save(&filename).await?;
             Ok(())
         })

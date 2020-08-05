@@ -10,7 +10,7 @@ use actix::prelude::*;
 
 use anyhow::Result;
 
-use super::common::{ConfigTask, create_filters, resolve_filename};
+use super::common::{ConfigTask, create_filters, resolve_value};
 
 mod trading_ticker;
 mod trading_stats;
@@ -37,6 +37,7 @@ impl Handler<ConfigTask> for TaskRunner {
     
     /// Based on passed task configuration this function gets data and saves them in the file.
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
+        use std::borrow::Cow;
         Box::pin(async move {
             let mut url = match task.Url {
                 Some(url) => url,
@@ -59,21 +60,34 @@ impl Handler<ConfigTask> for TaskRunner {
                 url.push_str(path_params);
             }
             loop {
+                let mut url_full = Cow::from(&url);
+                if let Some(query_params) = task.QueryParams.as_ref() {
+                    url_full.to_mut().push_str("?");
+                    for (k, v) in query_params.iter() {
+                        if !url_full.ends_with('?') {
+                            url_full.to_mut().push_str("&");
+                        }
+                        url_full.to_mut().push_str(k);
+                        url_full.to_mut().push_str("=");
+                        url_full.to_mut().push_str(&resolve_value(v, run_cnt, file_cnt));
+                    }
+                }
+
                 match task.Api.as_ref() {
                     "trading/ticker" => {
-                        data = Box::new(trading_ticker::get_data(&url, &filters).await?);
+                        data = Box::new(trading_ticker::get_data(&url_full, &filters).await?);
                         if data_out.is_none() {
                             data_out = trading_ticker::output_data_for(&task.Format);
                         }
                     },
                     "trading/stats" => {
-                        data = Box::new(trading_stats::get_data(&url, &filters).await?);
+                        data = Box::new(trading_stats::get_data(&url_full, &filters).await?);
                         if data_out.is_none() {
                             data_out = trading_stats::output_data_for(&task.Format);
                         }
                     },
                     "trading/orderbook" | "trading/orderbook-limited" => {
-                        data = Box::new(trading_orderbook::get_data(&url, &filters).await?);
+                        data = Box::new(trading_orderbook::get_data(&url_full, &filters).await?);
                         if data_out.is_none() {
                             data_out = trading_orderbook::output_data_for(&task.Format);
                         }
@@ -91,7 +105,7 @@ impl Handler<ConfigTask> for TaskRunner {
                 if let Some(new_after) = task.NewFileAfter {
                     if this_cnt >= new_after { 
                         if let Some(ref mut data_out) = data_out {
-                            let filename = resolve_filename(&task.OutPathMask, file_cnt);
+                            let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);
                             data_out.save(&filename).await?;
                         }
                         this_cnt = 1usize;
@@ -110,7 +124,7 @@ impl Handler<ConfigTask> for TaskRunner {
                     // std::thread::sleep(std::time::Duration::from_secs(frequency));
                 }
             }
-            let filename = resolve_filename(&task.OutPathMask, file_cnt);
+            let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);
             data_out.unwrap().save(&filename).await?;
             Ok(())
         })

@@ -43,6 +43,7 @@ pub struct ConfigTask {
     pub Module: String,
     pub Url: Option<String>,
     pub PathParams: Option<String>,
+    pub QueryParams: Option<HashMap<String, String>>,
     pub Format: String,
     pub OutPathMask: String,
     pub NewFileAfter: Option<usize>,
@@ -64,31 +65,80 @@ pub struct Config {
 /////////////////////////////////////////////////////////
 // Script Engine
 
-#[cfg(feature = "filter_rhai")]
+#[cfg(feature = "script_rhai")] 
+/// Module which provides [rhai](https://schungx.github.io/rhai/about/index.html) script language to be used
+/// for some keys in configuration file.
+/// 
+/// Following functions are implemented by cryptoexch program and
+/// are available in script snippets in addition to rhai built-in functions:
+/// 
+mod script_rhai {
+
+// #![doc(hidden)]
+use std::str::FromStr;
 use lazy_static::lazy_static;
 
-#[cfg(feature = "filter_rhai")]
-#[doc(hidden)]
-fn to_float(s: rhai::ImmutableString) -> rhai::FLOAT {
+/// Convert String to float
+fn parse_float(s: rhai::ImmutableString) -> rhai::FLOAT {
     rhai::FLOAT::from_str(s.as_str()).unwrap_or_default()
 }
 
-#[cfg(feature = "filter_rhai")]
-#[doc(hidden)]
-fn to_int(s: rhai::ImmutableString) -> rhai::INT {
+/// Convert String to integer
+fn parse_int(s: rhai::ImmutableString) -> rhai::INT {
     rhai::INT::from_str(s.as_str()).unwrap_or_default()
 }
 
-#[cfg(feature = "filter_rhai")]
+/// Returns current timestamp in UTC as formatted string according to provided format
+/// 
+/// `fmt` - format specifier as in [strftime](file:///home/grzegorz-ubu/Dokumenty/Projekty/Rust/cryptoexch/target/doc/chrono/format/strftime/index.html#specifiers)
+fn datetime_utc(fmt: rhai::ImmutableString) -> rhai::ImmutableString {
+    chrono::Utc::now().format(&fmt).to_string().into()
+}
+
+/// Returns current timestamp in UTC as number of seconds since epoch
+fn now_utc() -> rhai::INT {
+    chrono::Utc::now().timestamp()
+}
+
+/// Returns current timestamp in UTC as number of milliseconds since epoch
+fn now_utc_millis() -> rhai::INT {
+    chrono::Utc::now().timestamp_millis()
+}
+
+/// Returns current timestamp in local timezone as formatted string according to provided format
+/// 
+/// `fmt` - format specifier as in [strftime](file:///home/grzegorz-ubu/Dokumenty/Projekty/Rust/cryptoexch/target/doc/chrono/format/strftime/index.html#specifiers)
+fn datetime_local(fmt: rhai::ImmutableString) -> rhai::ImmutableString {
+    chrono::Local::now().format(&fmt).to_string().into()
+}
+
+/// Returns current timestamp in local timezone as number of seconds since epoch
+fn now_local() -> rhai::INT {
+    chrono::Local::now().timestamp()
+}
+
+/// Returns current timestamp in local timezone as number of milliseconds since epoch
+fn now_local_millis() -> rhai::INT {
+    chrono::Local::now().timestamp_millis()
+}
+
 lazy_static! {
     #[doc(hidden)]
-    static ref SCRIPT_ENGINE: rhai::Engine = {
+    pub static ref SCRIPT_ENGINE: rhai::Engine = {
         use rhai::{Engine, RegisterFn};
         let mut engine = Engine::new();
-        engine.register_fn("to_float", to_float);
-        engine.register_fn("to_int", to_int);
+        engine.register_fn("parse_float", parse_float);
+        engine.register_fn("parse_int", parse_int);
+        engine.register_fn("datetime_utc", datetime_utc);
+        engine.register_fn("now_utc", now_utc);
+        engine.register_fn("now_utc_millis", now_utc_millis);
+        engine.register_fn("datetime_local", datetime_local);
+        engine.register_fn("now_local", now_local);
+        engine.register_fn("now_local_millis", now_local_millis);
         engine
     };
+}
+
 }
 
 /////////////////////////////////////////////////////////
@@ -198,8 +248,8 @@ pub fn process_json_with_filters(key:&str, json_val: serde_json::Value, filters:
 /// It determines what kind of filters are implemented in application.
 /// 
 pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String, FilterFun>> {
-    #[cfg(feature = "filter_rhai")]
-    let engine = &*SCRIPT_ENGINE;
+    #[cfg(feature = "script_rhai")]
+    let engine = &*script_rhai::SCRIPT_ENGINE;
 
     let mut ret_filters = HashMap::new();
     if let Some(cfg_filters) = filters {
@@ -213,7 +263,7 @@ pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String,
                     let re = Regex::new(&flt.2)?;
                     ret_filters.insert(flt.0.clone(), Box::new(move |k:&str, _v:&serde_json::Value| re.is_match(k)) as FilterFun);
                 },
-                #[cfg(feature = "filter_rhai")]
+                #[cfg(feature = "script_rhai")]
                 "rhai" => {
                     let script = String::from(&flt.2);
                     ret_filters.insert(flt.0.clone(), Box::new(move |k:&str, v:&serde_json::Value| {
@@ -247,20 +297,52 @@ pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String,
 /////////////////////////////////////////////////////////
 // Other Helpers
 
-/// Function which transforms meta-characters contained in output file specification
-/// into actual values based on sequential counter or current date-time.
+/// Function which process value in configuration file according following rules:
+/// - if value is multilane it is processed as [rhai](https://schungx.github.io/rhai/about/index.html)  script which should return string
+/// - else if value contains `%` character it is processed by [strftime](file:///home/grzegorz-ubu/Dokumenty/Projekty/Rust/cryptoexch/target/doc/chrono/format/strftime/index.html#specifiers) function, where `%$` is being replaced by sequential counter
+/// - else value is taken verbatim
 /// 
-pub fn resolve_filename(template: &str, counter: usize) -> String {
+/// `value` - value from configuration file to process  
+/// `run_cnt` - run counter increased at every task run  
+/// `file_cnt` - file counter increased every time when data are saved in file
+/// 
+/// `run_cnt` and `file_cnt` are available in the rhai script under the same names.
+/// 
+#[cfg(feature = "script_rhai")]
+pub fn resolve_value(value: &str, run_cnt: usize, file_cnt: usize) -> String {
+    if value.contains('\n') {
+        let engine = &*script_rhai::SCRIPT_ENGINE;
+        let mut scope = rhai::Scope::new();
+        scope.push("run_cnt", run_cnt);
+        scope.push("file_cnt", file_cnt);
+        match engine.eval_with_scope::<String>(&mut scope, value) {
+            Ok(res) => res,
+            Err(e) => {
+                eprintln!("eval_with_scope error: {}", e);
+                value.to_owned()
+            }
+        }
+    } else {
+        resolve_value_no_script(value, file_cnt)
+    }
+}
+#[cfg(not(feature = "script_rhai"))]
+pub fn resolve_value(value: &str, _run_cnt: usize, file_cnt: usize) -> String {
+    resolve_value_no_script(value, file_cnt)
+}
+
+#[doc(hidden)]
+fn resolve_value_no_script(value: &str, file_cnt: usize) -> String {
     use chrono::prelude::*;
-    if template.contains('%') {
-        let filename = template.replace("%$", counter.to_string().as_ref());
+    if value.contains('%') {
+        let filename = value.replace("%$", file_cnt.to_string().as_ref());
         if filename.contains('%') {
             Utc::now().format(&filename).to_string()
         } else {
             filename
         }
     } else {
-        template.to_owned()
+        value.to_owned()
     }
 }
 

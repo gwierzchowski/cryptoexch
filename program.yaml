@@ -19,12 +19,12 @@ Tasks:
   #       - |
   #         if key.contains("ETH") { return true; }
   #         if val.h == () || val.l == () { return false; }
-  #         let h = val.h.to_float();
-  #         let l = val.l.to_float();
+  #         let h = val.h.parse_float();
+  #         let l = val.l.parse_float();
   #         if h == 0.0 || l == 0.0 { return false; }
   #         (h - l) / h > 0.1
         # - |
-        #   val["v"].to_float() > 0.0
+        #   val["v"].parse_float() > 0.0
         # - |
         #   val["m"].contains("ETH")
         # - |
@@ -58,44 +58,44 @@ Tasks:
   #   NewFileAfter: 2
   #   Filters:
   #     - ["items", "by_key_re", ".*ETH.*"]
-  # - Api: https://api.bitbay.net/rest/trading/stats
-  #   Module: GenericJson
-  #   Format: json_pretty
-  #   OutPathMask: samples/stats_all_in.json
-  #   StopAfter: 1
-  # - Api: https://api.bitbay.net/rest/trading/stats/ETH-PLN
-  #   Module: GenericJson
-  #   Format: json_pretty
-  #   OutPathMask: samples/stats_ETH_PLN_in.json
-  #   StopAfter: 1
-  - Api: trading/orderbook-limited
-    Module: BitBay
-    PathParams: ETH-PLN/10
-    # Format: pb
-    # OutPathMask: samples/orderbook_%$.pb3
-    # Format: json_pretty
-    # OutPathMask: samples/orderbook_%$.json
-    Format: csv
-    OutPathMask: samples/orderbook_10.csv
-    Frequency: 2
-    StopAfter: 2
-  # - Api: https://api.bitbay.net/rest/trading/ticker
-  #   Module: GenericJson
-  #   Format: json_pretty
-  #   OutPathMask: samples/ticker_all_%$.json
-  #   StopAfter: 1
+  # - Api: trading/orderbook-limited
+  #   Module: BitBay
+  #   PathParams: ETH-PLN/10
+  #   Format: csv
+  #   OutPathMask: samples/orderbook_10.csv
+  #   Frequency: 2
+  #   StopAfter: 2
+  - Api: https://api.bitbay.net/rest/trading/transactions
+    Module: GenericJson
+    # PathParams: ETH-PLN?fromTime=1596486167443&limit=50
+    # PathParams: ETH-PLN?limit=50&fromTime=1596486167443
+    PathParams: ETH-PLN
+    # QueryParams:
+    #   limit: 50
+    #   fromTime: 1596486167443
+    QueryParams:
+      limit: 50
+      # fromTime: |
+      #   "1596486167443"
+      # fromTime: |
+      #   (now_utc_millis() - 2357439).to_string()
+      fromTime: |
+        ((now_utc() - 480) * 1000).to_string()
+    Format: json_pretty
+    OutPathMask: samples/transactions_ETH_PLN_3.json
+    StopAfter: 1
   #   # Frequency: 4
   #   # NewFileAfter: 2
   #   Filters:
   #     - - buy
   #       - rhai
   #       - |
-  #         let ca = val.ca.to_float();
+  #         let ca = val.ca.parse_float();
   #         ca >= 7.0
   #     - - sell
   #       - rhai
   #       - |
-  #         let ca = val.ca.to_float();
+  #         let ca = val.ca.parse_float();
   #         ca >= 7.0
   #   # Filters:
   #   #   - ["items", "by_key_re", ".*ETH.*"]

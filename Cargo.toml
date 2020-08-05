@@ -23,7 +23,7 @@ out_csv = ["csv"]
 out_pb = ["protobuf", "protobuf-codegen-pure"]
 
 # Enables support for Script based filters
-filter_rhai = ["rhai"]
+script_rhai = ["rhai"]
 
 [dependencies]
 actix = "0.9"

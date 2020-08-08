@@ -1,5 +1,6 @@
 Config:
   PIDFile: /tmp/cryptoexch.pid
+  # LogConf: log4rs.yml
 
 Tasks:
   # - Api: trading/stats
@@ -82,7 +83,7 @@ Tasks:
       fromTime: |
         ((now_utc() - 480) * 1000).to_string()
     Format: json_pretty
-    OutPathMask: samples/transactions_ETH_PLN_3.json
+    OutPathMask: samples/transactions_ETH_PLN.json
     StopAfter: 1
   #   # Frequency: 4
   #   # NewFileAfter: 2

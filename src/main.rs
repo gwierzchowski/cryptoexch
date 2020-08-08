@@ -20,6 +20,7 @@ The program currently does not accept any command line parameters.
 */
 
 #[macro_use] extern crate anyhow;
+#[macro_use] extern crate log;
 // #[macro_use] extern crate lazy_static;
 
 use std::fs::File;
@@ -39,6 +40,18 @@ async fn main() -> Result<()> {
     let file = File::open("program.yaml")?;
     let conf = serde_yaml::from_reader::<_,common::Config>(file)?;
     //println!("conf = {:?}", conf);
+    if let Some(log_conf) = conf.Config.LogConf {
+        log4rs::init_file(log_conf, Default::default())?;
+    } else {
+        use log::LevelFilter;
+        use log4rs::append::console::ConsoleAppender;
+        use log4rs::config::{Appender, Config, Root};
+        let stdout = ConsoleAppender::builder().build();
+        let config = Config::builder()
+            .appender(Appender::builder().build("stdout", Box::new(stdout)))
+            .build(Root::builder().appender("stdout").build(LevelFilter::Warn))?;
+        log4rs::init_config(config)?;
+    }
     //return Ok(());
     // let system = System::new("cryptoexch");
     for task in conf.Tasks {

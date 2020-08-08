@@ -23,7 +23,8 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct ConfigConfig {
-    PIDFile: Option<String>,
+    pub PIDFile: Option<String>,
+    pub LogConf: Option<String>,
 }
 
 /// This type maps filters definition of configured task (`Tasks: Filters` key)
@@ -124,7 +125,7 @@ fn now_local_millis() -> rhai::INT {
 
 lazy_static! {
     #[doc(hidden)]
-    pub static ref SCRIPT_ENGINE: rhai::Engine = {
+    pub static ref ENGINE: rhai::Engine = {
         use rhai::{Engine, RegisterFn};
         let mut engine = Engine::new();
         engine.register_fn("parse_float", parse_float);
@@ -249,7 +250,7 @@ pub fn process_json_with_filters(key:&str, json_val: serde_json::Value, filters:
 /// 
 pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String, FilterFun>> {
     #[cfg(feature = "script_rhai")]
-    let engine = &*script_rhai::SCRIPT_ENGINE;
+    let engine = &*script_rhai::ENGINE;
 
     let mut ret_filters = HashMap::new();
     if let Some(cfg_filters) = filters {
@@ -275,13 +276,13 @@ pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String,
                                 match engine.eval_with_scope::<bool>(&mut scope, &script) {
                                     Ok(res) => res,
                                     Err(e) => {
-                                        eprintln!("eval_with_scope error: {}", e);
+                                        warn!("rhai: evaluation error: {}", e);
                                         false 
                                     }
                                 }
                             },
                             Err(e) => { 
-                                eprintln!("parse_json error: {}", e);
+                                warn!("rhai: parse_json error: {}", e);
                                 false 
                             }
                         }
@@ -311,14 +312,14 @@ pub fn create_filters(filters: &Option<ConfigFilters>) -> Result<HashMap<String,
 #[cfg(feature = "script_rhai")]
 pub fn resolve_value(value: &str, run_cnt: usize, file_cnt: usize) -> String {
     if value.contains('\n') {
-        let engine = &*script_rhai::SCRIPT_ENGINE;
+        let engine = &*script_rhai::ENGINE;
         let mut scope = rhai::Scope::new();
         scope.push("run_cnt", run_cnt);
         scope.push("file_cnt", file_cnt);
         match engine.eval_with_scope::<String>(&mut scope, value) {
             Ok(res) => res,
             Err(e) => {
-                eprintln!("eval_with_scope error: {}", e);
+                warn!("rhai: evaluation error: {}", e);
                 value.to_owned()
             }
         }
@@ -358,8 +359,8 @@ pub async fn handle_task(task: ConfigTask) {
         "GenericJson" => {
             let handler = super::generic_json::TaskRunner::new().start();
             match handler.send(task).await {
-                Err(e) => eprintln!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
-                Ok(Err(e)) => eprintln!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
+                Err(e) => error!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
+                Ok(Err(e)) => error!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
                 _ => {}
             }
         },
@@ -367,11 +368,11 @@ pub async fn handle_task(task: ConfigTask) {
         "BitBay" => {
             let handler = super::bitbay::TaskRunner::new().start();
             match handler.send(task).await {
-                Err(e) => eprintln!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
-                Ok(Err(e)) => eprintln!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
+                Err(e) => error!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
+                Ok(Err(e)) => error!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
                 _ => {}
             }
         },
-        _ => eprintln!("Unsupported Module: {}", task_mod)
+        _ => error!("Unsupported Module: {}", task_mod)
     }
 }

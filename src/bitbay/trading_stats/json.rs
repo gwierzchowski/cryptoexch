@@ -2,8 +2,6 @@
  * Implementation of JSON output format of trading/stats" API from "BitBay" module.
  */
 use std::any::Any;
-// use std::fs::File;
-// use std::io::prelude::*;
 use std::convert::{TryFrom, TryInto};
 
 use anyhow::{Result, Error};

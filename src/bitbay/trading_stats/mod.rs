@@ -1,7 +1,7 @@
 /*!
  * Implementation of "trading/stats" API from "BitBay" module.
  * 
- * This module is able to download data in JSON format from _https://api.bitbay.net/rest/trading/stats_ and save in file.
+ * This module is able to download data in JSON format from _https://api.bitbay.net/rest/trading/stats_ and save in file in several output formats.
  */
 use std::collections::HashMap;
 use std::convert::TryFrom;

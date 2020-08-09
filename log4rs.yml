@@ -9,13 +9,14 @@ appenders:
   # An appender named "requests" that writes to a file with a custom pattern encoder
   logfile:
     kind: file
-    path: "log/log.log"
-    encoder:
-      pattern: "{d} - {m}{n}"
+    path: log/log.log
+    # encoder:
+    #   pattern: "{d} - {m}{n}"
 
 # Set the default logging level to "warn" and attach the "stdout" appender to the root
 root:
   level: warn
+  # level: debug
   appenders:
     - stdout
     - logfile

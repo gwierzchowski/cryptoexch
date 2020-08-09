@@ -15,6 +15,7 @@ use super::common::{ConfigTask, create_filters, resolve_value};
 mod trading_ticker;
 mod trading_stats;
 mod trading_orderbook;
+mod trading_transactions;
 
 /////////////////////////////////////////////////////////
 // Task runner
@@ -38,6 +39,7 @@ impl Handler<ConfigTask> for TaskRunner {
     /// Based on passed task configuration this function gets data and saves them in the file.
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
         use std::borrow::Cow;
+        debug!("Scheduling task: {:?}", &task);
         Box::pin(async move {
             let mut url = match task.Url {
                 Some(url) => url,
@@ -72,6 +74,7 @@ impl Handler<ConfigTask> for TaskRunner {
                         url_full.to_mut().push_str(&resolve_value(v, run_cnt, file_cnt));
                     }
                 }
+                debug!("Sending request: {}", &url_full);
 
                 match task.Api.as_ref() {
                     "trading/ticker" => {
@@ -92,6 +95,12 @@ impl Handler<ConfigTask> for TaskRunner {
                             data_out = trading_orderbook::output_data_for(&task.Format);
                         }
                     },
+                    "trading/transactions" => {
+                        data = Box::new(trading_transactions::get_data(&url_full, &filters).await?);
+                        if data_out.is_none() {
+                            data_out = trading_transactions::output_data_for(&task.Format);
+                        }
+                    },
                     _ => bail!("Not supported Tasks:Api: {}", task.Api)
                 };
                 match data_out {
@@ -106,6 +115,7 @@ impl Handler<ConfigTask> for TaskRunner {
                     if this_cnt >= new_after { 
                         if let Some(ref mut data_out) = data_out {
                             let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);
+                            debug!("Saving data to file: {}", &filename);
                             data_out.save(&filename).await?;
                         }
                         this_cnt = 1usize;

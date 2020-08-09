@@ -1,37 +1,8 @@
 Config:
   PIDFile: /tmp/cryptoexch.pid
-  # LogConf: log4rs.yml
+  LogConf: log4rs.yml
 
 Tasks:
-  # - Api: trading/stats
-  #   Module: BitBay
-  #   Format: csv
-  #   # %$ - will be replace by consequtive counter
-  #   # other %* marks will go thru chrono::format function, see:
-  #   # https://docs.rs/chrono/0.4.13/chrono/format/strftime/index.html#specifiers
-  #   # OutPathMask: samples/stats_ETH_%$.csv
-  #   OutPathMask: samples/stats_ETH_%$_%s.csv
-  #   StopAfter: 2
-  #   Frequency: 3
-  #   NewFileAfter: 3
-  #   Filters:
-  #     - - items
-  #       - rhai
-  #       - |
-  #         if key.contains("ETH") { return true; }
-  #         if val.h == () || val.l == () { return false; }
-  #         let h = val.h.parse_float();
-  #         let l = val.l.parse_float();
-  #         if h == 0.0 || l == 0.0 { return false; }
-  #         (h - l) / h > 0.1
-        # - |
-        #   val["v"].parse_float() > 0.0
-        # - |
-        #   val["m"].contains("ETH")
-        # - |
-        #   val["m"] == "AMLT-PLN"
-      # - ["items", "by_key_re", ".*ETH.*"]
-      # - ["items", "by_key", "ETH-PLN"]
   # - Api: trading/stats
   #   Module: BitBay
   #   PathParams: ETH-PLN
@@ -44,19 +15,25 @@ Tasks:
   #   Format: csv
   #   OutPathMask: samples/ticker_ETH_PLN.csv
   #   StopAfter: 1
-  # - Api: trading/ticker
-  #   Module: BitBay
-  #   Format: csv
-  #   # Format: pb_proto
-  #   # Format: pb
-  #   # Format: json_pretty
-  #   OutPathMask: samples/ticker_ETH_%s.csv
-  #   # OutPathMask: samples/ticker.proto
-  #   # OutPathMask: samples/ticker_ETH_%s.pb3
-  #   # OutPathMask: samples/ticker_ETH_%c.json
-  #   StopAfter: 4
-  #   Frequency: 4
-  #   NewFileAfter: 2
+  - Api: trading/transactions
+    Module: BitBay
+    PathParams: ETH-PLN
+    QueryParams:
+      limit: 50
+      fromTime: |
+        ((now_utc() - 480) * 1000).to_string()
+    # Format: csv
+    # Format: pb_proto
+    Format: pb
+    # Format: json_pretty
+    # OutPathMask: samples/transactions_ETH_PLN.json
+    # OutPathMask: samples/transactions_ETH_PLN.csv
+    # OutPathMask: samples/ticker.proto
+    OutPathMask: samples/transactions_ETH_PLN.pb3
+    # OutPathMask: samples/ticker_ETH_%c.json
+    StopAfter: 2
+    Frequency: 4
+    # NewFileAfter: 2
   #   Filters:
   #     - ["items", "by_key_re", ".*ETH.*"]
   # - Api: trading/orderbook-limited
@@ -66,38 +43,18 @@ Tasks:
   #   OutPathMask: samples/orderbook_10.csv
   #   Frequency: 2
   #   StopAfter: 2
-  - Api: https://api.bitbay.net/rest/trading/transactions
-    Module: GenericJson
-    # PathParams: ETH-PLN?fromTime=1596486167443&limit=50
-    # PathParams: ETH-PLN?limit=50&fromTime=1596486167443
-    PathParams: ETH-PLN
-    # QueryParams:
-    #   limit: 50
-    #   fromTime: 1596486167443
-    QueryParams:
-      limit: 50
-      # fromTime: |
-      #   "1596486167443"
-      # fromTime: |
-      #   (now_utc_millis() - 2357439).to_string()
-      fromTime: |
-        ((now_utc() - 480) * 1000).to_string()
-    Format: json_pretty
-    OutPathMask: samples/transactions_ETH_PLN.json
-    StopAfter: 1
-  #   # Frequency: 4
-  #   # NewFileAfter: 2
-  #   Filters:
-  #     - - buy
-  #       - rhai
-  #       - |
-  #         let ca = val.ca.parse_float();
-  #         ca >= 7.0
-  #     - - sell
-  #       - rhai
-  #       - |
-  #         let ca = val.ca.parse_float();
-  #         ca >= 7.0
-  #   # Filters:
-  #   #   - ["items", "by_key_re", ".*ETH.*"]
+  # - Api: https://api.bitbay.net/rest/trading/transactions
+  #   Module: GenericJson
+  #   PathParams: ETH-PLN
+  #   QueryParams:
+  #     limit: 50
+  #     # fromTime: |
+  #     #   "1596486167443"
+  #     # fromTime: |
+  #     #   (now_utc_millis() - 2357439).to_string()
+  #     fromTime: |
+  #       ((now_utc() - 480) * 1000).to_string()
+  #   Format: json_pretty
+  #   OutPathMask: samples/transactions_ETH_PLN.json
+  #   StopAfter: 1
     

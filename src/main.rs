@@ -39,8 +39,7 @@ mod bitbay;
 async fn main() -> Result<()> {
     let file = File::open("program.yaml")?;
     let conf = serde_yaml::from_reader::<_,common::Config>(file)?;
-    //println!("conf = {:?}", conf);
-    if let Some(log_conf) = conf.Config.LogConf {
+    if let Some(ref log_conf) = conf.Config.LogConf {
         log4rs::init_file(log_conf, Default::default())?;
     } else {
         use log::LevelFilter;
@@ -52,14 +51,20 @@ async fn main() -> Result<()> {
             .build(Root::builder().appender("stdout").build(LevelFilter::Warn))?;
         log4rs::init_config(config)?;
     }
+    info!("Starting service");
+    debug!("Config = {:?}", &conf);
     //return Ok(());
     // let system = System::new("cryptoexch");
+    // debug!("Starting tasks");
     for task in conf.Tasks {
         actix::spawn(common::handle_task(task));
     }
+    debug!("Tasks started");
     // system.run();
     // System::current().arbiter().join();
     Arbiter::local_join().await;
+    debug!("All tasks finished");
     System::current().stop();
+    info!("Service stopped");
     Ok(())
 }

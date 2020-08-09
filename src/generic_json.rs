@@ -41,6 +41,7 @@ impl Handler<ConfigTask> for TaskRunner {
     /// Based on passed task configuration this function gets data and saves them in the file.
     fn handle(&mut self, task: ConfigTask, _ctx: &mut Context<Self>) -> Self::Result {
         use std::borrow::Cow;
+        debug!("Scheduling task: {:?}", &task);
         Box::pin(async move {
             let mut url = match task.Url {
                 Some(url) => url,
@@ -75,6 +76,7 @@ impl Handler<ConfigTask> for TaskRunner {
                         url_full.to_mut().push_str(&resolve_value(v, run_cnt, file_cnt));
                     }
                 }
+                debug!("Sending request: {}", &url_full);
                 
                 data = Box::new(get_data(&url_full, &filters).await?);
                 if data_out.is_none() {
@@ -92,6 +94,7 @@ impl Handler<ConfigTask> for TaskRunner {
                     if this_cnt >= new_after { 
                         if let Some(ref mut data_out) = data_out {
                             let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);
+                            debug!("Saving data to file: {}", &filename);
                             data_out.save(&filename).await?;
                         }
                         this_cnt = 1usize;

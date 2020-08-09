@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["mod_bitbay", "out_csv", "out_pb"]
-# default = ["mod_bitbay", "out_csv"]
+# default = ["mod_bitbay", "out_csv", "out_pb"]
+default = ["mod_bitbay", "script_rhai", "out_csv"]
+# default = ["mod_bitbay", "script_rhai"]
 
 # Cause data structures to implement Debug
 # with_debug = []
@@ -23,9 +24,6 @@ out_csv = ["csv"]
 out_pb = ["protobuf", "protobuf-codegen-pure"]
 
 script_rhai = ["rhai"]
-
-# Logging based on env_logger crate
-# log_env = ["env_logger"]
 
 [dependencies]
 actix = "0.9"

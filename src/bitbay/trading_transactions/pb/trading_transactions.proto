@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Transactions {
+  message Transaction {
+    enum TranType {
+      BYE = 0;
+      SELL = 1;
+    }
+    uint64 timestamp = 1;
+    TranType ttype = 2;
+    float amt = 3;
+    float rate = 4;
+    string id = 5;
+  }
+  repeated Transaction trans = 1;
+}

@@ -29,5 +29,13 @@ fn main() {
             .out_dir("src/bitbay/trading_orderbook/pb")
             .run()
             .expect("Codegen failed.");
+
+        println!("cargo:rerun-if-changed=src/bitbay/trading_transactions/pb/trading_transactions.proto");
+        protobuf_codegen_pure::Codegen::new()
+            .input("src/bitbay/trading_transactions/pb/trading_transactions.proto")
+            .include("src/bitbay/trading_transactions/pb")
+            .out_dir("src/bitbay/trading_transactions/pb")
+            .run()
+            .expect("Codegen failed.");
         }
 }

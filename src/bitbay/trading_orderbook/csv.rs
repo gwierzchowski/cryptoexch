@@ -14,7 +14,7 @@ use serde::Serialize;
 #[derive(Serialize, Debug)]
 struct OrderOut {
     timestamp: u64,
-    is_sell: u8, // use more compact 0/1 instead of bool which is represented in text false/true form by CSV serializer 
+    sell_flg: u8, // use more compact 0/1 instead of bool which is represented in text false/true form by CSV serializer 
     count: u16,
     rate: f32,
     curr_amt: f32,
@@ -42,7 +42,7 @@ impl crate::common::OutputData for OrderbooksOut {
                 self.orders.push(
                     OrderOut {
                         timestamp: data.timestamp,
-                        is_sell: 0,
+                        sell_flg: 0,
                         count: ord.co,
                         rate: ord.ra,
                         curr_amt: ord.ca,
@@ -55,7 +55,7 @@ impl crate::common::OutputData for OrderbooksOut {
                 self.orders.push(
                     OrderOut {
                         timestamp: data.timestamp,
-                        is_sell: 1,
+                        sell_flg: 1,
                         count: ord.co,
                         rate: ord.ra,
                         curr_amt: ord.ca,

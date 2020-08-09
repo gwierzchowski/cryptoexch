@@ -16,6 +16,7 @@ mod trading_ticker;
 mod trading_stats;
 mod trading_orderbook;
 mod trading_transactions;
+mod trading_candle;
 
 /////////////////////////////////////////////////////////
 // Task runner
@@ -99,6 +100,12 @@ impl Handler<ConfigTask> for TaskRunner {
                         data = Box::new(trading_transactions::get_data(&url_full, &filters).await?);
                         if data_out.is_none() {
                             data_out = trading_transactions::output_data_for(&task.Format);
+                        }
+                    },
+                    "trading/candle/history" => {
+                        data = Box::new(trading_candle::get_data(&url_full, &filters).await?);
+                        if data_out.is_none() {
+                            data_out = trading_candle::output_data_for(&task.Format);
                         }
                     },
                     _ => bail!("Not supported Tasks:Api: {}", task.Api)

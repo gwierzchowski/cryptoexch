@@ -1,5 +1,5 @@
 /*!
- * Implementation of CSV output format of "trading/transactions" API from "BitBay" module.
+ * Implementation of CSV output format of "trading/candle/history" API from "BitBay" module.
  */
 use std::any::Any;
 use std::convert::Into;
@@ -12,26 +12,26 @@ use serde::Serialize;
 
 /// Output object implementation.
 #[derive(Serialize, Debug)]
-pub struct TransactionsOut {
-    items: Vec<super::TransactionOut>,
+pub struct CandlesOut {
+    items: Vec<super::CandleOut>,
 }
 
-impl TransactionsOut {
+impl CandlesOut {
     pub fn new() -> Self {
-        TransactionsOut { items: Vec::new() }
+        CandlesOut { items: Vec::new() }
     }
 }
 
 #[async_trait]
-impl crate::common::OutputData for TransactionsOut {
+impl crate::common::OutputData for CandlesOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
-        if let Ok(data) = data.downcast::<super::TransactionsIn>() {
+        if let Ok(data) = data.downcast::<super::CandlesIn>() {
             for ref d in data.items {
                 self.items.push(d.into());
             }
             Ok(())
         } else {
-            bail!("Logical program error: data should be of trading_transactions::TransactionsIn type")
+            bail!("Logical program error: data should be of trading_candle::CandlesIn type")
         }
     }
 

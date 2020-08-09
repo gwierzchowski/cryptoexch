@@ -1,12 +1,14 @@
 /*!
- * Implementation of "trading/transactions" API from "BitBay" module.
+ * Implementation of "trading/candle/history" API from "BitBay" module.
  * 
- * This module is able to download data in JSON format from _https://api.bitbay.net/rest/trading/transactions and save in file in several output formats.
+ * This module is able to download data in JSON format from _https://api.bitbay.net/rest/trading/candle/history and save in file in several output formats.
  */
 use std::collections::HashMap;
+// use std::convert::TryFrom;
 use std::convert::From;
 
 use anyhow::Result;
+// use anyhow::{Result, Error};
 
 use serde::{Deserialize, Serialize};
 
@@ -24,34 +26,32 @@ pub mod pb;
 /////////////////////////////////////////////////////////
 // Input
 
-/// Buy/Sell flag
+/// Individual candle item.
 #[derive(Deserialize, Debug)]
-pub enum BuySell{
-    Buy,
-    Sell
+pub struct CandleIn {
+    o: f32,
+    c: f32,
+    h: f32,
+    l: f32,
+    v: f32,
+    co: u32,
 }
 
 /// Record of input data for this module.
-#[allow(non_snake_case)]
+/// A pair: timestamp, CandleIn
 #[derive(Deserialize, Debug)]
-pub struct TransactionIn {
-    a: f32,
-    id: String,
-    r: f32,
-    t: u64,
-    ty: BuySell,
-}
+pub struct CandleRecIn(u64, CandleIn);
 
 /// Input data for this module.
 //pub type TransactionsIn = Vec<TransactionIn>;
 #[derive(Deserialize, Debug)]
-pub struct TransactionsIn {
-    items: Vec<TransactionIn>,
+pub struct CandlesIn {
+    items: Vec<CandleRecIn>,
 }
 
 /// Function which downloads and returns chunk of input data.
 /// 
-pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<TransactionsIn> {
+pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<CandlesIn> {
     let resp = reqwest::get(url).await?;
     if resp.status().is_success() {
         let json:serde_json::Value = resp.json().await?;
@@ -65,31 +65,7 @@ pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<
         bail!(resp.status())
     }
 }
-/*
-pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<TransactionsIn> {
-    let resp = reqwest::get(url).await?;
-    if resp.status().is_success() {
-        let json:serde_json::Value = resp.json().await?;
-        let mut json = if filters.is_empty() {
-            process_json(json)
-        } else {
-            process_json_with_filters("/", json, filters)
-        };
-        let mut trans = Vec::<TransactionIn>::new();
-        if let Some(items) = json.get_mut("items") {
-            let items = items.as_object_mut().ok_or(anyhow!("'items' key in response is not JSON object"))?;
-            for it in items.values_mut() {
-                trans.push(serde_json::from_value(it.take())?);
-            }
-        } else {
-            bail!("Unsupported input JSON: no 'items' key in response")
-        }
-        Ok(trans)
-    } else {
-        bail!(resp.status())
-    }
-}
-*/
+
 /////////////////////////////////////////////////////////
 // Output - common
 
@@ -105,14 +81,14 @@ pub async fn get_data(url: &str, filters:&HashMap<String, FilterFun>) -> Result<
 pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
     match format {
         "json" | "json_pretty" => {
-            let mut json = json::TransactionsOut::new();
+            let mut json = json::CandlesOut::new();
             json.print_pretty = format == "json_pretty";
             Some(Box::new(json))
         },
         #[cfg(feature = "out_csv")]
-        "csv" => Some(Box::new(csv::TransactionsOut::new())),
+        "csv" => Some(Box::new(csv::CandlesOut::new())),
         #[cfg(feature = "out_pb")]
-        "pb" => Some(Box::new(pb::Transactions::new())),
+        "pb" => Some(Box::new(pb::Candles::new())),
         #[cfg(feature = "out_pb")]
         "pb_proto" => Some(Box::new(pb::ProtoOut)),
         _ => None
@@ -121,24 +97,27 @@ pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
 
 /// Record of output object.
 /// Output object depends on output format and is defined in respective sub-module.
-#[allow(non_snake_case)]
 #[derive(Serialize, Debug)]
-pub struct TransactionOut {
-    amt: f32,
-    id: String,
-    rate: f32,
+pub struct CandleOut {
     timestamp: u64,
-    sell_flg: u8, // 0 - buy, 1 - sell
+    open: f32,
+    close: f32,
+    high: f32,
+    low: f32,
+    vol: f32,
+    count: u32,
 }
 
-impl From<&TransactionIn> for TransactionOut {
-    fn from(tin: &TransactionIn) -> Self {
-        TransactionOut {
-            amt: tin.a,
-            id: tin.id.clone(),
-            rate: tin.r,
-            timestamp: tin.t,
-            sell_flg: if let BuySell::Buy = tin.ty { 0 } else { 1 },
+impl From<&CandleRecIn> for CandleOut {
+    fn from(cin: &CandleRecIn) -> Self {
+        CandleOut {
+            timestamp: cin.0,
+            open: cin.1.o,
+            close: cin.1.c,
+            high: cin.1.h,
+            low: cin.1.l,
+            vol: cin.1.v,
+            count: cin.1.co,
         }
     }
 }

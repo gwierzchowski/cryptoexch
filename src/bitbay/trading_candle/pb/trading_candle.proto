@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message Candles {
+  message Candle {
+    uint64 timestamp = 1;
+    float open = 2;
+    float close = 3;
+    float high = 4;
+    float low = 5;
+    float vol = 6;
+    uint32 count = 7;
+  }
+  repeated Candle candles = 1;
+}

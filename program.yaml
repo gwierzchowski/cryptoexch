@@ -15,24 +15,24 @@ Tasks:
   #   Format: csv
   #   OutPathMask: samples/ticker_ETH_PLN.csv
   #   StopAfter: 1
-  - Api: trading/transactions
+  - Api: trading/candle/history
     Module: BitBay
-    PathParams: ETH-PLN
+    PathParams: ETH-PLN/60
     QueryParams:
-      limit: 50
-      fromTime: |
-        ((now_utc() - 480) * 1000).to_string()
+      from: |
+        (now_utc_millis() - 900*1000).to_string()
+      to: |
+        now_utc_millis().to_string()
     # Format: csv
     # Format: pb_proto
     Format: pb
     # Format: json_pretty
-    # OutPathMask: samples/transactions_ETH_PLN.json
-    # OutPathMask: samples/transactions_ETH_PLN.csv
+    # OutPathMask: samples/candle_ETH_PLN.json
+    # OutPathMask: samples/candle_ETH_PLN.csv
     # OutPathMask: samples/ticker.proto
-    OutPathMask: samples/transactions_ETH_PLN.pb3
-    # OutPathMask: samples/ticker_ETH_%c.json
+    OutPathMask: samples/candle_ETH_PLN.pb3
+    Frequency: 30
     StopAfter: 2
-    Frequency: 4
     # NewFileAfter: 2
   #   Filters:
   #     - ["items", "by_key_re", ".*ETH.*"]
@@ -43,18 +43,16 @@ Tasks:
   #   OutPathMask: samples/orderbook_10.csv
   #   Frequency: 2
   #   StopAfter: 2
-  # - Api: https://api.bitbay.net/rest/trading/transactions
+  # - Api: https://api.bitbay.net/rest/trading/candle/history
   #   Module: GenericJson
-  #   PathParams: ETH-PLN
+  #   PathParams: ETH-PLN/60
   #   QueryParams:
-  #     limit: 50
-  #     # fromTime: |
-  #     #   "1596486167443"
-  #     # fromTime: |
-  #     #   (now_utc_millis() - 2357439).to_string()
-  #     fromTime: |
-  #       ((now_utc() - 480) * 1000).to_string()
+  #     from: |
+  #       (now_utc_millis() - 900*1000).to_string()
+  #     to: |
+  #       now_utc_millis().to_string()
   #   Format: json_pretty
-  #   OutPathMask: samples/transactions_ETH_PLN.json
-  #   StopAfter: 1
+  #   OutPathMask: samples/candle_raw_ETH_PLN.json
+  #   Frequency: 30
+  #   StopAfter: 2
     

@@ -4,9 +4,9 @@
  * This module is able to download data in JSON format from _https://api.bitbay.net/rest/trading/ticker_ and save in file in several output formats.
  */
 use std::collections::HashMap;
-use std::convert::TryFrom;
+use std::convert::From;
 
-use anyhow::{Result, Error};
+use anyhow::Result;
 
 use serde::{Deserialize, Serialize};
 
@@ -129,25 +129,21 @@ struct TickOut {
     minOffer2: f32,
 }
 
-impl TryFrom<&TickIn> for TickOut {
-    type Error = Error;
-
-    fn try_from(tin: &TickIn) -> std::result::Result<Self, Self::Error> {
-        Ok(
-            TickOut {
-                time: tin.time,
-                lowestAsk: tin.lowestAsk,
-                previousRate: tin.previousRate,
-                rate: tin.rate,
-                highestBid: tin.highestBid,
-                scale1: tin.market.first.scale,
-                currency1: tin.market.first.currency.clone(),
-                minOffer1: tin.market.first.minOffer,
-                scale2: tin.market.second.scale,
-                currency2: tin.market.second.currency.clone(),
-                minOffer2: tin.market.second.minOffer,
-            }
-        )
+impl From<&TickIn> for TickOut {
+    fn from(tin: &TickIn) -> Self {
+        TickOut {
+            time: tin.time,
+            lowestAsk: tin.lowestAsk,
+            previousRate: tin.previousRate,
+            rate: tin.rate,
+            highestBid: tin.highestBid,
+            scale1: tin.market.first.scale,
+            currency1: tin.market.first.currency.clone(),
+            minOffer1: tin.market.first.minOffer,
+            scale2: tin.market.second.scale,
+            currency2: tin.market.second.currency.clone(),
+            minOffer2: tin.market.second.minOffer,
+        }
     }
 }
 

@@ -2,9 +2,9 @@
  * Implementation of CSV output format of trading/ticker" API from "BitBay" module.
  */
 use std::any::Any;
-use std::convert::{TryFrom, TryInto};
+use std::convert::{From, Into};
 
-use anyhow::{Result, Error};
+use anyhow::Result;
 
 use async_trait::async_trait;
 
@@ -21,15 +21,13 @@ impl TickAllOut {
     }
 }
 
-impl TryFrom<&super::TickAllIn> for TickAllOut {
-    type Error = Error;
-
-    fn try_from(tin: &super::TickAllIn) -> std::result::Result<Self, Self::Error> {
+impl From<&super::TickAllIn> for TickAllOut {
+    fn from(tin: &super::TickAllIn) -> Self {
         let mut vout = Vec::with_capacity(tin.len());
         for el in tin {
-            vout.push(el.try_into()?);
+            vout.push(el.into());
         }
-        Ok(TickAllOut { ticks:vout })
+        TickAllOut { ticks:vout }
     }
 }
 
@@ -38,7 +36,7 @@ impl crate::common::OutputData for TickAllOut {
     fn add_data(&mut self, data: Box<dyn Any>) -> Result<()> {
         if let Ok(data) = data.downcast::<super::TickAllIn>() {
             for ref d in *data {
-                self.ticks.push(d.try_into()?);
+                self.ticks.push(d.into());
             }
             Ok(())
         } else {

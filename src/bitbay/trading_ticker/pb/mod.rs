@@ -35,10 +35,14 @@ impl TryFrom<&super::TickIn> for TickOut {
     fn try_from(tin: &super::TickIn) -> std::result::Result<Self, Self::Error> {
         let mut rec_out = TickOut::new();
         rec_out.set_time(tin.time);
-        rec_out.set_lowestAsk(tin.lowestAsk);
+        if let Some(lowest_ask) = tin.lowestAsk {
+            rec_out.set_lowestAsk(lowest_ask);
+        }
         rec_out.set_previousRate(tin.previousRate);
         rec_out.set_rate(tin.rate);
-        rec_out.set_highestBid(tin.highestBid);
+        if let Some(highest_ask) = tin.highestBid {
+            rec_out.set_highestBid(highest_ask);
+        }
         rec_out.set_scale1(tin.market.first.scale as u32);
         rec_out.set_currency1(tin.market.first.currency.clone());
         rec_out.set_minOffer1(tin.market.first.minOffer);

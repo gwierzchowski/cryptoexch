@@ -43,10 +43,10 @@ pub struct TickInMarket {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
 pub struct TickIn {
-    lowestAsk: f32,
+    lowestAsk: Option<f32>,
     previousRate: f32,
     rate: f32,
-    highestBid: f32,
+    highestBid: Option<f32>,
     time: u64,
     market: TickInMarket,
 }
@@ -117,10 +117,10 @@ pub fn output_data_for(format: &str) -> Option<Box<dyn OutputData>> {
 #[derive(Serialize, Debug)]
 struct TickOut {
     time: u64,
-    lowestAsk: f32,
+    lowestAsk: Option<f32>,
     previousRate: f32,
     rate: f32,
-    highestBid: f32,
+    highestBid: Option<f32>,
     scale1: u16,
     currency1: String,
     minOffer1: f32,

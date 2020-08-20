@@ -1,0 +1,138 @@
+# This is full program configuration file specification
+# Some keys are supported only when respective compilation feature is enabled.
+
+Config:
+  # Program when start will create this file with program PID in it.
+  # Optional (string)
+  # Default: no pid-file is created
+  PIDFile: /tmp/cryptoexch.pid
+  
+  # Configuration file path for log4rs crate based logger
+  # Optional (string)
+  # Default: Warning level logging to stdio
+  LogConf: log4rs.yml
+
+Tasks:
+  # List of tasks.
+    # Module performing task
+    # Required (string), one of:
+    #   GenericJson - downloads data from any ResFULL service providing JSON data
+    #   BitBay - downloads data from https://api.bitbay.net/rest; requires feature "mod_bitbay"
+  - Module: BitBay
+    
+    # Complete URL which is baing queried is constructed as follows:
+    #   Url/Api/PathParameters/QueryParametrs
+    #   where Api key is required and other ones are optional.
+    # Required (string)
+    # For module GenericJson it can be full URL or any api supported by service specified in Url key
+    # For module BitBay, one of:
+    #   trading/ticker
+    #   trading/stats
+    #   trading/orderbook
+    #   trading/orderbook-limited
+    #   trading/transactions
+    #   trading/candle/history
+    Api: trading/stats
+
+    # Url prefix.
+    # Optional (string)
+    # Default: for GenericJson empty string, for other modules its native root Url
+    Url: ""
+
+    # Path parameters appended to Url.
+    # Optional (string)
+    # Default: empty string
+    PathParams: ETH-PLN
+
+    # Path parameters appended to Url.
+    # Optional (dictionary)
+    # Default: no query parameters
+    # Values of parameters will be processed by series of transformations:
+    #   %$ - will be replace by consecutive file counter
+    #   other %* marks will go thru chrono::format function, see:
+    #     https://docs.rs/chrono/0.4.13/chrono/format/strftime/index.html#specifiers
+    #   if value is multi-line (set with |) then it is treated as rhai language script; requires feature "script_rhai"
+    #     See https://schungx.github.io/rhai/about/index.html
+    #     Rhai script should return (i.e. last expression should be) a string type
+    #     For script evaluation:
+    #       - set of additional functions is registered, see rustdoc for this crate module cryptoexch::common::script_rhai
+    #       - additional variables are passed to script:
+    #         * "run_cnt" - consecutive task call counter (increased when new data are queried)
+    #         * "file_cnt" - consecutive file counter (increased when data are saved to file)
+    # See some examples in samples.md file in this folder.
+    QueryParams:
+      # Parameters depends on specific API
+      # Below parameters will be transformed to:
+      # ?limit=50&fromTime=1596486167443
+      limit: 50
+      fromTime: "1596486167443"
+  
+    # Format of output file with data
+    # Required (string)
+    # Format depends on used module and API, see rustdoc for respective function: 
+    #   cryptoexch::<module>::<api>::output_data_for
+    # Currently following formats are supported:
+    #   All modules:
+    #     "json" - formatted in compact way - for computers
+    #     "json_pretty" - formatted in readable way - for humans
+    #   BitBay:
+    #     "csv" - with , as separator
+    #     "pb" - Google Protocol Buffers format
+    #     "pb_proto" - saves definition file (.proto) for pb format
+    Format: json
+
+    # Output file path
+    # Required (string)
+    # Value of this key is processed by the same transformations as parameters values in QueryParams
+    # If file with given name (after transformations) exists it will be overwritten.
+    OutPathMask: samples/stats_ETH_%$_%s.csv
+
+    # Stands for number of task runs after which data are saved in the file.
+    # After every output file save state variable: "file_cnt" is being increased
+    # Value of this variable can be used in OutputPath or parameters (see description of QueryParams)
+    # Optional (unsigned integer - u64 on 64bit systems)
+    # Default: Data are saved only after last query / download (before task is about to finish)
+    NewFileAfter: 3
+
+    # File counter ("file_cnt") after reaching this value is reset to 1.
+    # Optional (unsigned integer - u64 on 64bit systems)
+    # Default: usize::MAX (value in practice is never reset)
+    CounterMax: 99
+
+    # Stops task after performing  this number of downloads.
+    # After last download data are always saved to file independent on NewFileAfter setting.
+    # Optional (unsigned integer - u64 on 64bit systems)
+    # Default: Do not stop (run in infinite loop)
+    StopAfter: 10
+
+    # Next query / download is being performed after this number of seconds.
+    # Optional (unsigned long integer - u64 on all systems)
+    # Default: no delay - runs query after query as fast as possible
+    Frequency: 3
+
+    # Filter applied to downloaded Json.
+    # Optional (vector of 3 element tuples)
+    # Default: no filters applied
+    # Values are 3 element tuples, where:
+    #   - element 1 is a key inside Json whose value will be evaluated by filter; to evaluate root values, place "/" here
+    #   - element 2 is the kind of filter, currently one of:
+    #     * "by_key" - assumes that evaluated value is a dictionary and takes only keys of names equal to filter parameter (element 3)
+    #     * "by_key_re" - assumes that evaluated value is a dictionary and takes only keys of names that match to filter parameter (element 3) interpreted as regular expression
+    #     * "rhai" - assumes that evaluated value is a dictionary or vector;
+    #        interprets filter parameter (element 3) as rhai script which returns boolean value;
+    #         For script evaluation:
+    #         - set of additional functions is registered, see rustdoc for this crate module cryptoexch::common::script_rhai
+    #         - additional variables are passed to script:
+    #           * "key" - if evaluated value is a dictionary - the key of currently evaluated item
+    #           * "val" - the value of currently evaluated item
+    #   - element 3 is filter parameter, its interpretation depends on element 2
+    # In case more than one filter is configured, the filters are run in chain 
+    #    and item is taken when all filters return true.
+    # See some examples in samples.md file in this folder.
+    Filters:
+      - ["items", "by_key", "ETH-PLN"]
+
+  # next tasks . . .
+  - Module: BitBay
+  # . . .
+

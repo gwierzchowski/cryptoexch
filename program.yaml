@@ -15,24 +15,24 @@ Tasks:
   #   Format: csv
   #   OutPathMask: samples/ticker_ETH_PLN.csv
   #   StopAfter: 1
-  - Api: trading/candle/history
-    Module: BitBay
-    PathParams: ETH-PLN/60
-    QueryParams:
-      from: |
-        (now_utc_millis() - 900*1000).to_string()
-      to: |
-        now_utc_millis().to_string()
-    # Format: csv
-    # Format: pb_proto
-    Format: pb
-    # Format: json_pretty
-    # OutPathMask: samples/candle_ETH_PLN.json
-    # OutPathMask: samples/candle_ETH_PLN.csv
-    # OutPathMask: samples/ticker.proto
-    OutPathMask: samples/candle_ETH_PLN.pb3
-    Frequency: 30
-    StopAfter: 2
+  # - Module: BitBay
+  #   Api: trading/candle/history
+  #   PathParams: ETH-PLN/60
+  #   QueryParams:
+  #     from: |
+  #       (now_utc_millis() - 900*1000).to_string()
+  #     to: |
+  #       now_utc_millis().to_string()
+  #   Format: csv
+  #   # Format: pb_proto
+  #   # Format: pb
+  #   # Format: json_pretty
+  #   # OutPathMask: samples/candle_ETH_PLN.json
+  #   OutPathMask: samples/candle_ETH_PLN_%$.csv
+  #   # OutPathMask: samples/ticker.proto
+  #   # OutPathMask: samples/candle_ETH_PLN.pb3
+  #   # Frequency: 30
+  #   StopAfter: 1
     # NewFileAfter: 2
   #   Filters:
   #     - ["items", "by_key_re", ".*ETH.*"]
@@ -43,16 +43,18 @@ Tasks:
   #   OutPathMask: samples/orderbook_10.csv
   #   Frequency: 2
   #   StopAfter: 2
-  # - Api: https://api.bitbay.net/rest/trading/candle/history
-  #   Module: GenericJson
-  #   PathParams: ETH-PLN/60
-  #   QueryParams:
-  #     from: |
-  #       (now_utc_millis() - 900*1000).to_string()
-  #     to: |
-  #       now_utc_millis().to_string()
-  #   Format: json_pretty
-  #   OutPathMask: samples/candle_raw_ETH_PLN.json
-  #   Frequency: 30
-  #   StopAfter: 2
-    
+
+  - Module: BitBay
+    Api: trading/ticker
+    Format: pb_proto
+    OutPathMask: samples/ticker.proto
+    StopAfter: 1
+  - Module: BitBay
+    Api: trading/ticker
+    Format: pb
+    OutPathMask: samples/ticker_ETH_%$.pb
+    StopAfter: 4
+    Frequency: 5
+    Filters:
+      - ["items", "by_key_re", ".*ETH.*"]
+  

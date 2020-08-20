@@ -8,8 +8,9 @@ edition = "2018"
 
 [features]
 # default = ["mod_bitbay", "out_csv", "out_pb"]
-default = ["mod_bitbay", "script_rhai", "out_csv"]
+# default = ["mod_bitbay", "script_rhai", "out_csv"]
 # default = ["mod_bitbay", "script_rhai"]
+default = ["script_rhai"]
 
 # Cause data structures to implement Debug
 # with_debug = []

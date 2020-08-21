@@ -92,6 +92,7 @@ Following are some ideas I consider to develop. Checked items are more likely to
 - [x] Implement `Config: PIDFile` option  
 - [ ] Process `PathParams` key in similar way as `QueryParams`  
 - [ ] Optimize parameters' processing - if there are no replacements, move parameter outside loop
+- [ ] Data save procedures for some formats (csv, pb) use blocking, sync functions
 - [ ] Graceful shutdown
 - [ ] To avoid races files should be created / opened with .tmp extension and renamed to final name when completely done.
 - [ ] Improve rhai scripts capabilities: e.g. introduce some container for state variables.

@@ -1,12 +1,12 @@
 # Cryptoexch
 
-Data downloader from RestFUL APIs.
+Data downloader from RestFUL services.
 
-I'm using this program in following data chain:
+I'm using this program in following data workflow:
 
 - The program `cryptoexch` is deployed and run in cloud and collects data to cloud based storage
 - Agent on my PC downloads those data when I turn on computer
-- Then AI based program (which I constantly improve) analyze the data and when appropriate came up with  signals pointing to particular markers to look at.
+- Then AI based program (which I constantly improve) analyze the data and when appropriate came up with signals pointing to particular markers to look at.
 
 One of possible use cases for other users would be to clone program and clone `BitBay` module and modify for web service of choice (very easy task) or use module `GenericJson`. Main purpose of program is to constantly download new data and provide than in format more convenient for data analysis (like csv) or in more compact form (proto buffers) easier to manage.
 
@@ -19,11 +19,30 @@ One of possible use cases for other users would be to clone program and clone `B
 - Additional features for selected services:
   * [BitBay](https://bitbay.net) - additional output formats: csv, protocol buffers
 
+## Cargo Features
+Features which can be enabled / disabled during program build.
+
+| Feature       | Default | Description |
+|---------------|---------|-------------|
+| `script_rhai` | off | Enables possibility to use [rhai](https://schungx.github.io/rhai/about/index.html) scripting language in configuration file |
+| `out_csv`     | off | Enables CSV output file format |
+| `out_pb`      | off | Enables Google Protocol Buffers output file format |
+| `mod_bitbay`  | off | Enables module to support [BitBay](https://bitbay.net) service  |
+|               |     |   |
+
 ## Usage
 
 Program invokation:
 ```
-cryptoexch program.yaml
+USAGE:
+    cryptoexch [CONF]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+ARGS:
+    <CONF>    Configuration file with tasks specification (default: program.yaml)
 ```
 
 Sample configuration file (program.yaml):
@@ -70,6 +89,7 @@ Program is in very initial state of development and is work in progress. Until 1
 
 Following are some ideas I consider to develop. Checked items are more likely to be added or ones for which development has started.
 
+- [x] Implement `Config: PIDFile` option  
 - [ ] Process `PathParams` key in similar way as `QueryParams`  
 - [ ] Optimize parameters' processing - if there are no replacements, move parameter outside loop
 - [ ] Graceful shutdown

@@ -14,12 +14,24 @@ Task can be configured to end after given number of loops or run infinitely.
 If task encounters any error it is being ended.
 The program finish when all tasks are finished or keep running if at least one of the tasks is configured to run in infinite loop.
 
+## Cargo Features
+Features which can be enabled / disabled during program build.
+
+| Feature       | Default | Description |
+|---------------|---------|-------------|
+| `script_rhai` | off | Enables possibility to use [rhai](https://schungx.github.io/rhai/about/index.html) scripting language in configuration file |
+| `out_csv`     | off | Enables CSV output file format |
+| `out_pb`      | off | Enables Google Protocol Buffers output file format |
+| `mod_bitbay`  | off | Enables module to support [BitBay](https://bitbay.net) service  |
+|               |     |   |
+
 # Usage
 
 The program currently does not accept any command line parameters.
 */
 
 #[macro_use] extern crate anyhow;
+#[macro_use] extern crate clap;
 #[macro_use] extern crate log;
 // #[macro_use] extern crate lazy_static;
 
@@ -29,6 +41,8 @@ use actix::prelude::*;
 
 use anyhow::Result;
 
+use clap::{Arg, App};
+
 mod common;
 mod generic_json;
 
@@ -37,7 +51,20 @@ mod bitbay;
 
 #[actix_rt::main]
 async fn main() -> Result<()> {
-    let file = File::open("program.yaml")?;
+    let matches = App::new(crate_name!())
+        .version(crate_version!())
+        .author(crate_authors!())
+        .about(crate_description!())
+        .arg(Arg::with_name("CONF")
+            .help("Configuration file with tasks specification (default: program.yaml)")
+            .required(false)
+            .index(1))
+        .get_matches();
+    let conf_path = match matches.value_of("CONF") {
+        Some(conf_path) => conf_path,
+        None => "program.yaml"
+    };
+    let file = File::open(conf_path)?;
     let conf = serde_yaml::from_reader::<_,common::Config>(file)?;
     if let Some(ref log_conf) = conf.Config.LogConf {
         log4rs::init_file(log_conf, Default::default())?;
@@ -53,9 +80,7 @@ async fn main() -> Result<()> {
     }
     info!("Starting service");
     debug!("Config = {:?}", &conf);
-    //return Ok(());
     // let system = System::new("cryptoexch");
-    // debug!("Starting tasks");
     for task in conf.Tasks {
         actix::spawn(common::handle_task(task));
     }

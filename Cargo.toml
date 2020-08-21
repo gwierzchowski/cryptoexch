@@ -10,7 +10,7 @@ edition = "2018"
 # default = ["mod_bitbay", "out_csv", "out_pb"]
 # default = ["mod_bitbay", "script_rhai", "out_csv"]
 # default = ["mod_bitbay", "script_rhai"]
-default = ["script_rhai"]
+# default = ["script_rhai"]
 
 # Cause data structures to implement Debug
 # with_debug = []
@@ -32,6 +32,7 @@ actix-rt = "1.1"
 anyhow = "1"
 async-trait = "0.1"
 chrono = "0.4"
+clap = "2"
 csv = { version = "1.1", optional = true }
 lazy_static = "1.4"
 log = "0.4"

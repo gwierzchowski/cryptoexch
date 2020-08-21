@@ -5,6 +5,7 @@ Config:
   # Program when start will create this file with program PID in it.
   # Optional (string)
   # Default: no pid-file is created
+  # NOTE: Not implemented yet
   PIDFile: /tmp/cryptoexch.pid
   
   # Configuration file path for log4rs crate based logger

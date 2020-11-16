@@ -1,6 +1,6 @@
 # Cryptoexch
 
-Data downloader from RestFUL services.
+Data downloader from REST services.
 
 I'm using this program in following data workflow:
 
@@ -32,7 +32,7 @@ Features which can be enabled / disabled during program build.
 
 ## Usage
 
-Program invokation:
+Program invocation:
 ```
 USAGE:
     cryptoexch [CONF]
@@ -92,12 +92,13 @@ Following are some ideas I consider to develop. Checked items are more likely to
 - [x] Implement `Config: PIDFile` option  
 - [ ] Process `PathParams` key in similar way as `QueryParams`  
 - [ ] Optimize parameters' processing - if there are no replacements, move parameter outside loop
-- [ ] Data save procedures for some formats (csv, pb) use blocking, sync functions
+- [ ] Data save procedures for some formats (pb) use blocking, sync functions
 - [ ] Graceful shutdown
-- [ ] To avoid races files should be created / opened with .tmp extension and renamed to final name when completely done.
+- [ ] To avoid races, files should be created / opened with .tmp extension and renamed to final name when completely done.
+- [ ] Currently entire task exits when some invocation fails; make it more flexible - e.g. allow for next trials.
 - [ ] Improve rhai scripts capabilities: e.g. introduce some container for state variables.
 - [ ] Support for APIs that require authorization key.
 - [ ] Support for Kraken crypto exchange.
 - [ ] Special purpose module which allows user to run custom command (e.g. zip all created files).
-- [ ] Support for more output formats - e.g. some compact binary formats compatible with Python pandas package or even direct injection to database.
+- [ ] Support for more output formats - e.g. some compact binary formats compatible with Python pandas package, HDF5 or even direct injection to database.
 - [ ] Integration tests

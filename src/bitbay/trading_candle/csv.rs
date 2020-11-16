@@ -37,10 +37,9 @@ impl crate::common::OutputData for CandlesOut {
 
     async fn save(&mut self, path: &str) -> Result<()> {
         let file = tokio::fs::File::create(path).await?;
-        let file = file.into_std().await; // csv does not currently support async write (TODO: Maybe contribute)
-        let mut wri = csv::Writer::from_writer(file); 
+        let mut wri = csv_async::AsyncSerializer::from_writer(file); 
         for rec in &self.items {
-            wri.serialize(rec)?;
+            wri.serialize(rec).await?;
         }
         self.items.clear();
         Ok(())

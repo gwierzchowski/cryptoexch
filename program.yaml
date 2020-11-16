@@ -3,18 +3,22 @@ Config:
   LogConf: log4rs.yml
 
 Tasks:
-  # - Api: trading/stats
-  #   Module: BitBay
-  #   PathParams: ETH-PLN
-  #   Format: csv
-  #   OutPathMask: samples/stats_ETH_PLN.csv
-  #   StopAfter: 1
-  # - Api: trading/ticker
-  #   Module: BitBay
-  #   PathParam: ETH-PLN
-  #   Format: csv
-  #   OutPathMask: samples/ticker_ETH_PLN.csv
-  #   StopAfter: 1
+  - Api: trading/stats
+    Module: BitBay
+    # PathParams: ETH-PLN
+    Filters:
+      - ["items", "by_key_re", "(ETH|BTC)-PLN"]
+    Format: csv
+    OutPathMask: samples/stats_%c.csv
+    StopAfter: 1
+  - Api: trading/ticker
+    Module: BitBay
+    # PathParam: ETH-PLN
+    Filters:
+      - ["items", "by_key_re", "(ETH|BTC)-PLN"]
+    Format: csv
+    OutPathMask: samples/ticker_%c.csv
+    StopAfter: 1
   # - Module: BitBay
   #   Api: trading/candle/history
   #   PathParams: ETH-PLN/60
@@ -44,17 +48,17 @@ Tasks:
   #   Frequency: 2
   #   StopAfter: 2
 
-  - Module: BitBay
-    Api: trading/ticker
-    Format: pb_proto
-    OutPathMask: samples/ticker.proto
-    StopAfter: 1
-  - Module: BitBay
-    Api: trading/ticker
-    Format: pb
-    OutPathMask: samples/ticker_ETH_%$.pb
-    StopAfter: 4
-    Frequency: 5
-    Filters:
-      - ["items", "by_key_re", ".*ETH.*"]
+  # - Module: BitBay
+  #   Api: trading/ticker
+  #   Format: pb_proto
+  #   OutPathMask: samples/ticker.proto
+  #   StopAfter: 1
+  # - Module: BitBay
+  #   Api: trading/ticker
+  #   Format: pb
+  #   OutPathMask: samples/ticker_ETH_%$.pb
+  #   StopAfter: 4
+  #   Frequency: 5
+  #   Filters:
+  #     - ["items", "by_key_re", ".*ETH.*"]
   

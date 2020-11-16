@@ -46,25 +46,11 @@ impl crate::common::OutputData for StatsAllOut {
         }
     }
 
-    // fn save(&mut self, path: &str) -> Result<()> {
-    //     // let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?; // TODO: Change to non blocking
-    //     // let mut wri = csv::Writer::from_writer(file); 
-    //     let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
-    //     for rec in &self.stats {
-    //         wri.serialize(rec)?;
-    //     }
-    //     self.stats.clear();
-    //     Ok(())
-    // }
-
     async fn save(&mut self, path: &str) -> Result<()> {
-        // let file = std::fs::OpenOptions::new().create(true).append(true).open(path)?; // TODO: Change to non blocking
         let file = tokio::fs::File::create(path).await?;
-        let file = file.into_std().await; // csv does not currently support async write (TODO: Maybe contribute)
-        let mut wri = csv::Writer::from_writer(file); 
-        // let mut wri = csv::Writer::from_path(path)?; // TODO: Change to non blocking
+        let mut wri = csv_async::AsyncSerializer::from_writer(file); 
         for rec in &self.stats {
-            wri.serialize(rec)?;
+            wri.serialize(rec).await?;
         }
         self.stats.clear();
         Ok(())

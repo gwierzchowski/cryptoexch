@@ -1,27 +1,32 @@
 [package]
 name = "cryptoexch"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["gwierzchowski <gwierzchowski@wp.pl>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 # Stock version should have default = []
+default = []
 
-# default = ["mod_bitbay", "out_csv", "out_pb"]
-# default = ["mod_bitbay", "script_rhai", "out_csv", "out_pb"]
-# default = ["mod_bitbay", "script_rhai"]
+# default = ["mod_zonda", "out_csv", "out_pb"]
+# default = ["mod_zonda", "script_rhai", "out_csv", "out_pb"]
+# default = ["mod_zonda", "script_rhai", "out_csv", "out_hdf"]
+# default = ["mod_zonda", "script_rhai"]
 # default = ["script_rhai"]
 
 # Cause data structures to implement Debug
 # with_debug = []
 
-# Enables support for https://bitbay.net
-mod_bitbay = []
+# Enables support for https://zondaglobal.com
+mod_zonda = []
 
 # Enables support for CSV output format
 out_csv = ["csv-async"]
+
+# Enables support for HDF5 output format
+out_hdf = ["hdf5"]
 
 # Enables support for Protocol Buffers output format
 out_pb = ["protobuf", "protobuf-codegen-pure"]
@@ -29,28 +34,29 @@ out_pb = ["protobuf", "protobuf-codegen-pure"]
 script_rhai = ["rhai"]
 
 [dependencies]
-actix = "0.10"
-actix-rt = "1.1"
+actix = "0.13"
+actix-rt = "2.7"
 anyhow = "1.0"
 async-trait = "0.1"
 chrono = "0.4"
-clap = "2"
+clap = { version = "4", features = ["derive"] }
 # csv-async = { path = "../csv-async", version = "*", features = ["tokio"], optional = true }
 csv-async = { version = "1.1", features = ["tokio"], optional = true }
+futures-util = "0.3"
+hdf5 = { version = "0.8", optional = true }
 lazy_static = "1.4"
 log = "0.4"
 # env_logger = { version = "0.7", optional = true }
-log4rs = "0.13.0"
+log4rs = "1"
 # quick-protobuf = { version = "0.7", optional = true }
-protobuf = { version = "2", optional = true }
-regex = "1.4"
-reqwest = { version = "0.10", features = ["blocking", "json"] }
-rhai = { version = "0.19", features = ["sync"], optional = true }
+protobuf = { version = "3", optional = true }
+regex = "1"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+rhai = { version = "1", features = ["sync"], optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_yaml = "0.8"
-# Keep in v0.2 until actix wil be upgraded to 0.3
-tokio = { version = "0.2", features = ["fs", "io-util"] }
+serde_yaml = "0.9"
+tokio = { version = "~1.20", features = ["fs", "io-util"] }
 
 [build-dependencies]
 protobuf-codegen-pure = { version = "2", optional = true }

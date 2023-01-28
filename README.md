@@ -8,7 +8,7 @@ I'm using this program in following data workflow:
 - Agent on my PC downloads those data when I turn on computer
 - Then AI based program (which I constantly improve) analyze the data and when appropriate came up with signals pointing to particular markers to look at.
 
-One of possible use cases for other users would be to clone program and clone `BitBay` module and modify for web service of choice (very easy task) or use module `GenericJson`. Main purpose of program is to constantly download new data and provide than in format more convenient for data analysis (like csv) or in more compact form (proto buffers) easier to manage.
+One of possible use cases for other users would be to clone program and clone `Zonda` module and modify for web service of choice (very easy task) or use module `GenericJson`. Main purpose of program is to constantly download new data and provide than in format more convenient for data analysis (like csv) or in more compact form (proto buffers) easier to manage.
 
 ## Features
 
@@ -17,7 +17,7 @@ One of possible use cases for other users would be to clone program and clone `B
 - After given number of downloads saves collected data in the JSON file, whose name may contain auto-counter or date
 - Can filter downloaded data
 - Additional features for selected services:
-  * [BitBay](https://bitbay.net) - additional output formats: csv, protocol buffers
+  * [Zonda](https://Zonda.net) - additional output formats: csv, protocol buffers
 
 ## Cargo Features
 Features which can be enabled / disabled during program build.
@@ -27,7 +27,7 @@ Features which can be enabled / disabled during program build.
 | `script_rhai` | off | Enables possibility to use [rhai](https://schungx.github.io/rhai/about/index.html) scripting language in configuration file |
 | `out_csv`     | off | Enables CSV output file format |
 | `out_pb`      | off | Enables Google Protocol Buffers output file format |
-| `mod_bitbay`  | off | Enables module to support [BitBay](https://bitbay.net) service  |
+| `mod_zonda`   | off | Enables module to support [Zonda](https://zondaglobal.com) service  |
 |               |     |   |
 
 ## Usage
@@ -51,7 +51,7 @@ Config:
   LogConf: log4rs.yml
 
 Tasks:
-  - Module: BitBay
+  - Module: Zonda
     Api: trading/candle/history
     PathParams: ETH-PLN/60
     QueryParams:
@@ -98,7 +98,7 @@ Following are some ideas I consider to develop. Checked items are more likely to
 - [ ] Currently entire task exits when some invocation fails; make it more flexible - e.g. allow for next trials.
 - [ ] Improve rhai scripts capabilities: e.g. introduce some container for state variables.
 - [ ] Support for APIs that require authorization key.
-- [ ] Support for Kraken crypto exchange.
+- [ ] Support for [Kraken](kraken.com) crypto exchange.
 - [ ] Special purpose module which allows user to run custom command (e.g. zip all created files).
 - [ ] Support for more output formats - e.g. some compact binary formats compatible with Python pandas package, HDF5 or even direct injection to database.
 - [ ] Integration tests

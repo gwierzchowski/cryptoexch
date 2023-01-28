@@ -18,15 +18,15 @@ Tasks:
     # Module performing task
     # Required (string), one of:
     #   GenericJson - downloads data from any ResFULL service providing JSON data
-    #   BitBay - downloads data from https://api.bitbay.net/rest; requires feature "mod_bitbay"
-  - Module: BitBay
+    #   Zonda - downloads data from  https://api.zonda.exchange/rest; requires feature "mod_zonda"
+  - Module: Zonda
     
     # Complete URL which is baing queried is constructed as follows:
     #   Url/Api/PathParameters/QueryParametrs
     #   where Api key is required and other ones are optional.
     # Required (string)
     # For module GenericJson it can be full URL or any api supported by service specified in Url key
-    # For module BitBay, one of:
+    # For module Zonda, one of:
     #   trading/ticker
     #   trading/stats
     #   trading/orderbook
@@ -76,7 +76,7 @@ Tasks:
     #   All modules:
     #     "json" - formatted in compact way - for computers
     #     "json_pretty" - formatted in readable way - for humans
-    #   BitBay:
+    #   Zonda:
     #     "csv" - with , as separator
     #     "pb" - Google Protocol Buffers format
     #     "pb_proto" - saves definition file (.proto) for pb format
@@ -134,6 +134,6 @@ Tasks:
       - ["items", "by_key", "ETH-PLN"]
 
   # next tasks . . .
-  - Module: BitBay
+  - Module: Zonda
   # . . .
 

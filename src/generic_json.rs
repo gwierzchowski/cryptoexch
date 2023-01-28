@@ -109,7 +109,7 @@ impl Handler<ConfigTask> for TaskRunner {
                     }
                 }
                 if let Some(frequency) = task.Frequency {
-                    actix::clock::delay_for(std::time::Duration::from_secs(frequency)).await;
+                    actix::clock::sleep(std::time::Duration::from_secs(frequency)).await;
                 }
             }
             let filename = resolve_value(&task.OutPathMask, run_cnt, file_cnt);

@@ -126,7 +126,7 @@ fn now_local_millis() -> rhai::INT {
 lazy_static! {
     #[doc(hidden)]
     pub static ref ENGINE: rhai::Engine = {
-        use rhai::{Engine, RegisterFn};
+        use rhai::Engine;
         let mut engine = Engine::new();
         engine.register_fn("parse_float", parse_float);
         engine.register_fn("parse_int", parse_int);
@@ -347,6 +347,7 @@ fn resolve_value_no_script(value: &str, file_cnt: usize) -> String {
     }
 }
 
+
 /// Task handler function.
 /// This function determines which modules are implemented, and based on configured module:
 /// - creates respective task object which implements actix Handler interface 
@@ -362,16 +363,16 @@ pub async fn handle_task(task: ConfigTask) {
                 Err(e) => error!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
                 Ok(Err(e)) => error!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
                 _ => {}
-            }
+            };
         },
-        #[cfg(feature = "mod_bitbay")]
-        "BitBay" => {
-            let handler = super::bitbay::TaskRunner::new().start();
+        #[cfg(feature = "mod_zonda")]
+        "Zonda" => {
+            let handler = super::zonda::TaskRunner::new().start();
             match handler.send(task).await {
                 Err(e) => error!("Task '{}/{}': Dispatch error: {}", task_mod, task_api, e),
                 Ok(Err(e)) => error!("Task '{}/{}': Run error: {}", task_mod, task_api, e),
                 _ => {}
-            }
+            };
         },
         _ => error!("Unsupported Module: {}", task_mod)
     }

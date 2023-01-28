@@ -56,7 +56,7 @@ Task will create 1 file (`samples/exchangerates_2020-08-17.json`) with exchange 
 ```yaml
 Tasks:
   - Api: trading/stats
-    Module: BitBay
+    Module: Zonda
     Format: csv
     OutPathMask: samples/stats_ETH_%$_%s.csv
     StopAfter: 2
@@ -122,7 +122,7 @@ timestamp,market1,market2,vol,hi,lo,r24h
 ```yaml
 Tasks:
   - Api: trading/transactions
-    Module: BitBay
+    Module: Zonda
     PathParams: ETH-PLN
     QueryParams:
       limit: 50
@@ -195,7 +195,7 @@ amt,id,rate,timestamp,sell_flg
 ### Configuration file:
 ```yaml
 Tasks:
-  - Module: BitBay
+  - Module: Zonda
     Api: trading/orderbook-limited
     PathParams: ETH-PLN/10
     Format: csv
@@ -286,12 +286,12 @@ timestamp,sell_flg,count,rate,curr_amt,prev_amt,start_amt
 ### Configuration file:
 ```yaml
 Tasks:
-  - Module: BitBay
+  - Module: Zonda
     Api: trading/ticker
     Format: pb_proto
     OutPathMask: samples/ticker.proto
     StopAfter: 1
-  - Module: BitBay
+  - Module: Zonda
     Api: trading/ticker
     Format: pb
     OutPathMask: samples/ticker_ETH_%$.pb
